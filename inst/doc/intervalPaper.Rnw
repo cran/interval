@@ -1,0 +1,901 @@
+\documentclass[article]{jssNoName}
+
+% \VignetteIndexEntry{Exact and Asymptotic Weighted Logrank Tests for Interval Censored Data: The interval R package}
+% \VignetteKeyword{Interval censoring}
+% \VignetteKeyword{Hypothesis test}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% declarations for jss.cls 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% almost as usual
+\author{Michael P. Fay\\National Institute of Allergy \\ and Infectious 
+Diseases \And Pamela A. Shaw\\National Institute of Allergy \\ and 
+Infectious Diseases}
+\title{Exact and Asymptotic Weighted Logrank Tests for Interval 
+Censored Data:\\  The \pkg{interval} \proglang{R} package\\
+(Draft Date: April 2, 2009) \\
+(Same as submitted except for headers)}
+
+%% for pretty printing and a nice hypersummary also set:
+\Plainauthor{Michael P. Fay, Pamela A. Shaw} %% comma-separated
+\Plaintitle{Exact and Asymptotic Weighted Logrank Tests for Interval 
+Censored Data:  The interval R package} %% without formatting
+\Shorttitle{Weighted Logrank Tests for Interval Censored Data} 
+%% a short title (if necessary)
+
+%% an abstract and keywords
+\Abstract{
+For right censored data perhaps the most commonly used test is the
+logrank test. In this paper we review several of generalizations of
+the logrank test to interval censored data and present an
+\proglang{R} package, \pkg{interval}, to implement many of them. 
+The \pkg{interval} package depends on the \pkg{perm} package, 
+which performs exact and asymptotic linear permutation tests. 
+The \pkg{perm} package performs many of the tests from the \pkg{coin} package, 
+and provides an independent validation of \pkg{coin}. We discuss steps that 
+were taken to test and validate both the \pkg{interval} and \pkg{perm} packages.
+}
+\Keywords{logrank test, wilcoxon test, exact tests, network 
+algorithm, \proglang{R}}
+\Plainkeywords{logrank test, wilcoxon test, exact tests, network 
+algorithm, R} %% without formatting
+%% at least one keyword must be supplied
+
+%% publication information
+%% NOTE: Typically, this can be left commented and will be filled out by the technical editor
+%% \Volume{13}
+%% \Issue{9}
+%% \Month{September}
+%% \Year{2004}
+%% \Submitdate{2004-09-29}
+%% \Acceptdate{2004-09-29}
+
+%% The address of (at least) one author should be given
+%% in the following format:
+\Address{
+  Michael P. Fay \\
+  National Institute of Allergy and Infectious Diseases \\
+  6700B Rockledge Drive \\
+  Bethesda, MD 20892-7609 \\
+  E-mail: \email{mfay@niaid.nih.gov}\\
+  
+URL:\url{http://www3.niaid.nih.gov/about/organization/dcr/BRB/staff/michael.htm}
+}
+%% It is also possible to add a telephone and fax number
+%% before the e-mail in the following format:
+%% Telephone: +43/1/31336-5053
+%% Fax: +43/1/31336-734
+
+%% for those who use Sweave please include the following line (with 
+% symbols):
+%% need no \usepackage{Sweave.sty}
+
+%% end of declarations 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{document}
+
+%% include your article here, just as usual
+%% Note that you should use the \pkg{}, \proglang{} and \code{} commands.
+
+
+%\section[About Java]{About \proglang{Java}}
+%% Note: If there is markup in \(sub)section, then it has to be escape as above.
+
+
+
+\section{Introduction}
+
+
+
+\cite{Fink:1986}  generalized the logrank test to  interval censored
+data over 20 years ago.
+Finkelstein's test is appropriate for comparing treatment groups
+when the response is  time to an event and time may only be
+known to fall into an interval. An example is time to
+progression-free survival (see e.g., \cite{Frei:2007}), where patients are monitored intermittently and progression is known to have occurred only to within the time since the last visit. Despite this
+long history, including several different methods of generalization,
+these tests are rarely used in the medical literature. This maybe due in part to the lack of widely available software to analyze interval censored data.
+
+In this paper we describe an \proglang{R} package, called
+\pkg{interval}, to perform  weighted logrank tests (WLRT) (including
+a generalization of the Wilcoxon-Mann-Whitney test) for interval
+censored data. For each type of score (either logrank-type or Wilcoxon-type) the \pkg{interval} package
+allows three methods for creating tests: (1) score tests, (2) permutation tests  derived from the score statistics in the grouped
+continuous model (GCM), both described in \cite{Fay:1999}, and (3) multiple imputation tests as described in \cite{Huan:2008}. The p-values from the permutation tests may be calculated either asymptotically using a permutational central limit theorem or exactly using either complete enumeration, a network algorithm (for the two-sample case only), or Monte Carlo resampling.
+We know of no readily available software to perform these tests
+(nor other different generalizations of the WLRTs to interval censored data),
+except for the Splus functions (written by the first author) upon
+which the \pkg{interval} package is based (see \pkg{interval.tar.gz} at \url{http://stat.cmu.edu/S/}).
+
+In Section~\ref{sec-background} we give background on the
+generalizations the of WLRTs for interval censored data.
+We review different forms of the likelihood as well as the different methods for carrying out the tests.
+This section reviews what is known about the asymptotic validity of these tests for different interval censoring settings. With this
+background, we hope to give intuition on the methods for users
+primarily familiar with the usual right-censored logrank tests and also provide information to guide
+the applied researcher to make an appropriate choice for the test for their setting of interest.
+ 
+The mathematical formulation of the WLRTs used in \pkg{interval} package are outlined in
+Section~\ref{sec-details}. Section~\ref{sec-application}
+provides step-by-step instructions for how to use the \pkg{interval} package to perform data analysis. This application section demonstrates the use of two main functions of \pkg{interval}: \code{icfit} which provide survival distribution estimates and \code{ictest} which performs weighted logrank tests.
+
+A major focus of this paper is the
+validation of the \pkg{interval} package.   Since there is no other
+software available upon which to validate the \pkg{interval}
+software, we divide up the algorithms necessary for the test into
+several distinct pieces for which there {\it is} software to validate the program. 
+
+In Section~\ref{sec-NPMLE}, we discuss the estimation of the 
+nonparametric maximum likelihood (NPMLE) estimator of the survival
+function from the full (interval censored) data. Currently, there is
+an \proglang{R} package, \pkg{Icens}, which provides many different
+algorithms for estimating that NPMLE. We have designed the
+\pkg{interval} package to be able to input NPMLEs from that package,
+using the class structure designed there (see Section~\ref{sec-interacting}). 
+We also provide one algorithm as an independent estimator. 
+
+Some of the interval tests in the \pkg{interval} package are permutation tests, so
+we have created a separate package, \pkg{perm}, upon which \pkg{interval} depends,
+that performs exact and asymptotic linear permutation tests. The \pkg{perm} 
+package is discussed in Section~\ref{sec-perm}. Note that this package is mostly redundant because all
+of the tests performed by \pkg{perm} are available in the package \pkg{coin} (\cite{Hoth:2006}). 
+The redundancy provides independent software to check the results from \pkg{perm}. We also discuss an
+important difference between \pkg{perm} and \pkg{coin} that arises when there are non-integer ties in response scores, something that can occur with non-negligible probability in 
+interval censored data. We show one such example which details how the \pkg{interval} package 
+treats these ties correctly, while the \pkg{coin} package (Version~\Sexpr{packageDescription("coin",fields="Version")}
+or less) does not. Additionally, the \pkg{perm} package provides a network algorithm for the two-sample 
+test (see e.g., \cite{Agre:1990}), which is not provided in \pkg{coin}, although the algorithms implemented in
+\pkg{coin} are generally faster than the network algorithm in \pkg{perm}. In Section~\ref{sec-interacting}, we also demonstrate how the \pkg{interval} can employ \pkg{coin} to carry out a permutation test of the logrank scores.
+
+
+\section{Background on Weighted Logrank Tests for Interval Censored
+Data}
+\label{sec-background}
+
+\subsection{Overview for Applied Researchers}
+\label{sec-app.overview}
+
+For right censored data, the logrank test is a score test on the
+proportional hazards model, so it is an efficient test to use when
+there are proportional hazards. There are several different versions
+of  the logrank test that have been developed (see
+\cite{Kalb:1980}). In particular, the likelihood could be the
+marginal likelihood of the ranks, the partial likelihood, or the
+grouped continuous model. Further, the variance could be estimated
+by the Fisher's information from the likelihood, by Martingale methods (see 
+\cite{Flem:1991}) or by permutation
+methods. The differences between the several different versions of
+the logrank test are often not a focus of applied statisticians;
+however, in this paper since we are emphasizing validation of
+software, these slight differences need to be considered to avoid confusion and will be discussed in detail in
+later sections (see e.g., \cite{Call:2003}).
+
+In addition to the logrank test , which is a WLRT with constant weight of 1 (or approximately 1), 
+an important WLRT is the one that generalizes the Wilcoxon-Mann-Whitney test. We will call these latter tests Wilcoxon-type tests, 
+but they are known by other names (e.g., Prentice-Wilcoxon test,
+propotional odds model, Harrington-Fleming $G^{\rho}$ class with
+$\rho=1$). Similar to the logrank test, the Wilcoxon-type tests also have been derived using different likelihoods and
+using different variances. The important point for the applied
+researcher is that the Wilcoxon-type tests emphasize early events
+(when there are more people at risk) more than the later events (when
+there are fewer people at risk), while the logrank test gives
+constant weights over time.
+
+One might be tempted, if one has interval censored data, to simply
+impute the mid-point of the intervals, and perform the usual right
+censored weighted logrank tests.
+\cite{Law:1992} studied the mid-point imputation method,
+where interval censored observations \\ (\cite{Law:1992} use the
+term `doubly censored observations' to mean interval censored
+observations) are replaced by the mid-point of the interval, then
+the data are treated as right-censored responses. They performed
+some simulations and showed that when the censoring mechanism is
+different between the two groups, the type I error of a nominal
+$0.05$ test was in one case estimated to be as high as $0.19$.
+
+We now summarize the details of the next few sections.
+Both likelihoods that may be applied to interval censored data (the likelihood under the grouped continuous model (LGCM) and the 
+marginal likelihood of the ranks (MLR)) should give similar answers. The permutation form of the tests 
+are generally preferred over the score test forms when using the LGCM, since permuting allows exact inference when the 
+ censoring is not related to the covariate (e.g., treatment), and the permutation results avoid theoretical 
+ problems of the score test (see below and \cite{Fay:1996}).  When the censoring is related to treatment and there 
+ are few inspection times compared to the number of subjects, the usual score test is recommended since it is asymptotically valid
+ in this case.  
+ Now we give some more details on the different tests for interval censored data.
+
+\subsection{Which Likelihood?}
+
+From the start there is not a clear decision about which
+likelihood to use. \cite{Self:1986} used the marginal likelihood of
+the ranks (MLR). This has the advantage that all the nuisance
+parameters are eliminated. The disadvantage of the MLR is that it is difficult to calculate. 
+Note that even in the right censored case with ties, the likelihood is usually only approximated
+(see \cite{Kalb:1980} pp. 74-75).
+\cite{Satt:1996} introduces a stochastic
+approximation to the MLR using Gibbs sampling for the proportional
+hazards model and it is generalized to proportional odds and other
+models by \cite{Gu:2005}.
+
+\cite{Fink:1986} (see also, \cite{Fay:1996,Fay:1999}) used the likelihood
+under the grouped continuous model (LGCM). In the LGCM, there are
+many nuisance parameters that must be estimated, and the standard
+likelihood-based tests (i.e., Score test, Wald test, and Likelihood
+ratio test) do not follow the usual theory unless there is a limited
+number of observation times which do not grow as the sample size
+increases (see \cite{Fay:1996}). Note however, that, the permutation test 
+formed from the scores of the LGCM is theoretically justified, and is known to
+ be a valid test when the censoring is unrelated to the covariate (see the following section). 
+ We discuss the computational issues of the LGCM in the next section. For the non-censored case, 
+ \cite{Pett:1984} studied the two likelihoods and showed that both likelihoods give asymptotically 
+ equivalent score tests as long as either the number of categories of response is fixed, 
+ or  the number of categories does not increase
+too quickly compared to the total sample size. Pettitt concluded
+(see  \cite{Pett:1984}, section 5.1) that the score test for the MLR was more efficient 
+(i.e., had greater power) than the score test for the LGCM; however, Pettitt did not consider the 
+permutation form of the test using the LGCM.
+
+Finally, when imputation methods are used then Martingale methods may be used (see \cite{Huan:2008} and below). 
+
+\subsection{Score Test, Permutation Test, or Imputation?}
+
+Once the likelihood is chosen, and the scores (i.e., each summand in the first derivative of the loglikelihood with respect to the
+parameter of interest evaluated under the null) are calculated, then the distribution of those scores under the null must be estimated.
+There are several methods for doing this, but the three most common
+are using asymptotic methods with the observed Fisher's information, which is commonly known as the score test,  using permutation
+methods, or using multiple imputation (\cite{Huan:2008}) (which in this paper we call within subject resampling). 
+
+When the censoring mechanism is the same for all treatment groups,
+then the permutation test is known to be valid for either the MRL or
+the LGCM. In this case of equal censoring, the score test
+is only known to be asymptotically valid using the MRL; using the
+LGCM we require the additional assumption that the number of
+observation times remains fixed as the sample size goes to infinity
+(see \cite{Fay:1996} for a discussion of this issue).
+
+%\cite{Brow:1984} has studied in the right censored case the choice
+%between the  the Mantel-Haenszel variance
+%(I now do not think this is equivalent to the score variance, although maybe it is approximately so) and the permutation test. 
+%\cite{Brow:1984} shows that for equal sample sizes and when the score is large in absolute value
+%that the score variance
+%tends to underestimate the variance. Further, when the sample sizes
+%are unequal the permutation variance tends to overestimate the
+%variance. Because of these two facts, \cite{Brow:1984} recommends the
+%permutation variance.
+
+When there is unequal censoring then the theory of the permutation
+variance is not met. Thus, many authors have suggested that with
+unequal censoring the score variance is better (see e.g., \cite{Fay:1996}, p. 820 for the interval censoring case). 
+% I DO NOT THINK THIS IS CORRECT ANYMORE. JANSSEN 1991 IS CONFUSING
+% SEE NEUHAUS (1993, Annals, 1761) APPEARS TO CONTRADICT BELOW STATEMENT
+%However, for the right
+%censoring case \cite{Jans:1991} has shown that the permutation tests
+%are asymptotically valid. If the permutation tests for interval censored data 
+%act similarly, then large samples should ensure approximate validity 
+%even with unequal censoring mechanisms in the groups. 
+
+
+Another strategy to create WLRT for interval censored data is to impute right censored data 
+from the interval censored data and then properly adjust the variance. \cite{Huan:2008} 
+improved on some earlier attempts at this variance adjustment after imputation. This appears to be 
+a reasonable strategy, and provides an independent check on the other methods. On each imputation 
+\cite{Huan:2008} only considered the 
+usual Martingale derived variance (use method="wsr.HLY" in \code{ictest}), 
+while the \pkg{interval} package additionally allows for permutational variance
+(method="wsr.pclt") and Monte Carlo 
+estimation within each imputation (method="wsr.mc").
+
+\section{Mathematical Formulation of the Scores for the WLRT }
+\label{sec-details}
+
+In this section, we provide the general form of rank invariant score test on the grouped continuous model, and for each of the three score tests available within \pkg{ictest}, 
+we briefly describe the underlying survival model 
+(or hazard model) 
+%\textcolor{red}{(or hazard model?)} 
+and the mathematical form of the individual scores. Further details on the derivation of the tests are given in \cite{Fay:1996}
+and \cite{Fay:1999}.
+
+Suppose we have $n$ subjects.
+For the $i$th subject, use the following notation:
+\begin{description}
+\item[$x_i$] is the time to event, $X_i$ is the associated random
+variable.
+\item[$L_i$] is the largest observation time before the event is
+known to have occurred.
+\item[$R_i$] is the smallest observation time at or after the event
+is known to have occurred. In other words, we know that $x_i \in
+(L_i, R_i]$.  We allow $R_i = \infty$ to denote right censoring.
+%For exact event times, i.e., $L_i =  \lim_{\epsilon \rightarrow 0}
+%R_i - \epsilon \equiv R_i-0$, we enter
+%those values into the software using $L_i=R_i$.
+\item[$z_i$] is a $k \times 1$ vector of covariates.
+\end{description}
+
+Let the ordered potential
+%\textcolor{red}{potential} 
+observation times be $0=t_0 < t_1 < t_2 < \cdots <
+t_m < t_{m+1} = \infty$.
+Partition the sample space by creating $(m+1)$ intervals, with the
+$j$th interval denoted $I_j  \equiv (t_{j-1},t_j]$.
+For simplicity, we assume that $L_{i}, R_{i} \in
+\{ t_{0}, \ldots, t_{m+1} \}$.
+Let
+\begin{eqnarray*}
+\alpha_{ij} & = & \left\{ \begin{array}{cc}
+ 1 & \mbox{  if  }  L_{i} < t_{j} \leq R_{i}  \\
+ 0 & \mbox{ otherwise }
+\end{array} \right.
+\end{eqnarray*}
+We write the general model of the survival  for the $i$th
+individual as
+ \begin{eqnarray*}
+ Pr ( X_i > t_{j} | z_{i} ) & = & S(t_{j} | z_{i}' \beta, \gamma)
+ \end{eqnarray*}
+where $\beta$ is a $k \times 1$ vector of treatment parameters,
+and $\gamma$ is an $m \times 1$ vector of nuisance
+parameters 
+for the unknown survival function.
+%\textcolor{red}{for the unknown survival function}. 
+In the \pkg{interval} package, there are three different ways we model 
+$S(t_{j} | z_{i}' \beta, \gamma)$, giving three different tests. 
+
+
+The grouped continuous likelihood for  interval censored data is
+ \begin{eqnarray}
+ L & = & \prod_{i=1}^{n} \sum_{j=1}^{m+1} \alpha_{ij} \left[
+ S(t_{j-1} | z_{i}' \beta, \gamma ) - S(t_{j} | z_{i}' \beta,
+\gamma) \right]
+= \prod_{i=1}^{n} \left[   S(L_{i} | z_{i}' \beta, \gamma ) -
+S(R_{i} | z_{i}' \beta, \gamma) \right] \label{eq:gc.likelihood}
+ \end{eqnarray}
+
+ To form the score statistic we take the derivative
+ of $ \log(L)$ with respect to $\beta$ and evaluate it
+ at $\beta=0$.  The
+MLE of the nuisance parameters when $\beta=0$ (in terms of the
+baseline survival)  are the
+self-consistent estimates of survival,
+$\hat{S}(t_{j}), j=1,\ldots, m$.
+For convenience, let $\hat{S}(t_{0}) =1$ and
+ $\hat{S}(t_{m+1}) = 0$, even though these values are
+known by assumption.
+
+We can write the efficient score vector for the parameter $\beta$
+(see \cite{Fay:1996}, \cite{Fay:1999}) as
+\begin{eqnarray}
+U & = & 
+\sum_{i=1}^{n} z_{i}  \left( \frac{   \hat{S}'(L_{i}) -  \hat{S}'(R_{i})
+ }{
+ \hat{S}(L_{i}) - \hat{S}(R_{i}) } \right)  
+ %\nonumber \\ & 
+ \equiv
+ % & 
+   \sum_{i=1}^{n} z_{i} c_{i} \label{eq:perm}
+\end{eqnarray}
+where $\hat{S}(t)$ is the nonparametric estimate of the survival
+function at $t$ using the pooled data across all groups,
+and $\hat{S}'(t)$ is the derivative with respect to $\beta$.
+
+When $z_{i}$ is an $k \times 1$ vector
+of indicators of $k$ treatments, we can rewrite
+the $\ell$th row of
+$U$ as
+\begin{eqnarray}
+ U_{\ell} & = &
+\sum_{j=1}^{m} w_{j} \left[d_{j \ell}' -  \frac{ n_{j\ell}' d_{j}'
+ }{
+ n_{j}' }  \right],  \label{eq:weighted.logrank}
+ \end{eqnarray}
+where
+\begin{eqnarray*}
+w_{j} & = &  \frac{  \hat{S}(t_{j}) \hat{S}'(t_{j-1}) - \hat{S}
+(t_{j-1}) \hat{S}'(t_{j})
+}{
+\hat{S}(t_{j}) \left[ \hat{S}(t_{j-1}) - \hat{S}(t_{j} ) \right] },
+\end{eqnarray*}
+and $d_{j\ell}'$ represents the expected value under the null
+of the number of deaths in $I_{j}$ for the $\ell$th treatment
+group, $d_{j}'$ represents the expected value under the null
+of the total number of deaths
+in $I_j$, similarly $n_{j \ell}'$ and
+$n_{j}'$ represent the expected number at risk.
+
+
+We now give the values for $c_i$ (from equation~\ref{eq:perm}) and $w_i$ (from equation~\ref{eq:weighted.logrank}) 
+for 3 different 
+%\textcolor{red}{ hazard? relative risk? survival?} 
+survival
+models provided in \pkg{ictest}.
+Although not developed first, we present the model of \cite{Sun:1996} first because it is the generalization of the 
+logrank test most commonly used for right censored data.
+%\subsection{Logrank using Logistic Model}
+\cite{Sun:1996} modelled the odds of discrete hazards as proportional to 
+$\exp(z_i'\beta)$ 
+(see \cite{Fay:1999}), leading to the 
+ more complicated survival function:
+\begin{eqnarray*} \label{SunScore}
+S(t_j | z_i, \gamma) & = & \prod_{k=1}^{j} \left\{ 1 + \left( \frac{S(t_{k-1}|\gamma) -S(t_k|\gamma)}{S(t_k|\gamma)} \right) \right\}^{-1}.
+\end{eqnarray*} 
+Here and in the other two models, $S(t_{j} | \gamma)$ is a estimator of survival
+that does not depend on the covariates $z_i$, and $S(t_{j} | \gamma)$ is nonparametric because 
+the $\gamma$ is $m \times 1$ and there are only $m$ unique time points observed in the data.
+Denote its estimator $S(t|\hat{\gamma}) \equiv \hat{S}(t)$, which is the NPMLE of the survival function of all the data
+ignoring covariates.
+Under the model of  \cite{Sun:1996} we get,
+\begin{eqnarray}
+c_{i} & = &  
+%\frac{ \sum_{j=1}^{m+1} \alpha_{ij}
+%\left[  \hat{S}(t_{j}) \left( \sum_{\ell=1}^{j}
+%\frac{  \hat{S}(t_{\ell-1}) - \hat{S}(t_{\ell}) }{
+%\hat{S}(t_{\ell-1}) } \right)  -  \hat{S}(t_{j-1}) \left(
+%\sum_{\ell=1}^{j-1}
+%\frac{  \hat{S}(t_{\ell-1}) - \hat{S}(t_{\ell}) }{
+%\hat{S}(t_{\ell-1}) } \right)  \right] }{
+%\sum_{j=1}^{m+1} \alpha_{ij} \left[
+%\hat{S}(t_{j-1}) - \hat{S}(t_{j}) \right] } \label{eq:ci.Logistic}
+\frac{ \hat{S}(L_i) \log \tilde{S}(L_i) - \hat{S}(R_i) \log
+\tilde{S}(R_i)  }{ \hat{S}(L_i)   -
+\hat{S}(R_i) } 
+\end{eqnarray}
+where $\tilde{S}(t_j) = \exp \left( - \sum_{\ell=1}^{j} \hat{\lambda}_{\ell} \right)$,
+and $\lambda_{\ell} = \left\{ \hat{S}(t_{\ell-1}) -  \hat{S}(t_{\ell}) \right\} / \hat{S}(t_{\ell-1})$,
+and
+\begin{eqnarray*}
+w_{j} & = & 1.
+\end{eqnarray*}
+This model is called from the \pkg{interval} package by the option scores=``logrank1''.
+
+The second model we consider was actually developed first, it is the grouped proportional hazards model 
+introduced by \cite{Fink:1986}, where the survival function is
+modeled as $S(t_{j} | z_{i}' \beta, \gamma)=S(t_{j} | \gamma)^{\exp(z_i' \beta)}$.
+Under this grouped propotional hazards model, the $c_i$ values are:
+%\subsection{Logrank using Grouped Proportional Hazards Model}
+\begin{eqnarray}
+c_{i} & = & \left\{ \begin{array}{cc}
+\frac{ \hat{S}(L_i) \log \hat{S}(L_i) - \hat{S}(R_i) \log
+\hat{S}(R_i)  }{ \hat{S}(L_i)   -
+\hat{S}(R_i) }  & \mbox{ for $R_{i} < t_{m+1}$ } \\
+ & \mbox{  } \\
+ \log \hat{S}(L_i)   & \mbox{
+for $R_{i} = t_{m+1} \equiv \infty$ }
+\end{array} \right. \label{eq:ci.GPH}
+\end{eqnarray}
+and
+\begin{eqnarray*}
+w_{j} & = &  \frac{
+\hat{S}(t_{j-1}) \left[ \log \hat{S}(t_{j-1}) - \log \hat{S}(t_{j})
+\right] }{\hat{S}(t_{j-1})   -
+\hat{S}(t_{j})}.
+\end{eqnarray*}
+Note that because this model is a proportional hazards one, we call the resulting test
+a logrank test also and the model is called by scores=``logrank2'' in the \pkg{interval} package. 
+When $\hat{S}(t_{j-1})/\hat{S}(t_j) \approx 1$ then $w_j \approx 1$. 
+
+
+%\subsection{Prentice-Wilcoxon using Proportional Odds Model}
+Finally, we consider the 
+model proposed by \cite{Fay:1996} giving the Wilcoxon-type test, 
+where the odds are proportional to $\exp( - z_i \beta)$ so that the 
+survival function is 
+\begin{eqnarray*}
+S(t_j | z_i, \gamma) & = & \left\{ 1 + \left( \frac{ 1 - S(t_j| \gamma)}{S(t_j|\gamma)} \right) exp( z_i \beta ) \right\}^{-1}
+\end{eqnarray*}
+and we get 
+\begin{eqnarray*}
+c_{i} & = &  \hat{S}(L_{i}) + \hat{S}(R_{i}) - 1
+\end{eqnarray*}
+and
+\begin{eqnarray*}
+w_{j} & = & \hat{S}(t_{j-1})
+\end{eqnarray*}
+
+
+%\subsection{Scores under Right Censoring}
+
+
+We now show the form of the scores in the special case
+of right censoring.
+For this, we introduce new notation. Suppose that there are
+$m^*$ observed failure times,
+$t_1^* < t_2^* < \cdots < t^*_{m^*}$. In other words there are $m^*$
+subjects for which
+$x_i = R_i$ is known, so that $L_i = \lim_{\epsilon \rightarrow 0}
+R_i - \epsilon \equiv R_i -0$.
+Let $n_j$ and $d_j$ be the number of subjects who are at risk or
+fail respectively at $t_j^*$.
+Then the Kaplan-Meier survival estimate is (see e.g., \cite{Kalb:1980})
+\begin{eqnarray*}
+\hat{S}(t) & = & \prod_{j | t_j^* \leq  t} \left( \frac{ n_j - d_j
+}{n_j } \right).
+\end{eqnarray*}
+
+
+
+In the following table we summarize the formulation of the scores for the 3 model (score) choices in \pkg{interval}, 
+as described above, for both interval censored and ordinary right censored data.
+
+%\begin{table}
+%\noindent
+\begin{centering}
+{\bf Scores For Right Censored Data }
+\end{centering}
+
+\begin{tabular}{lcc}
+Test  & Score ($c_i$) for Observed & Score ($c_{i'}$) for Right-censored \\
+(Model) & failure at $t_h^*$ & observation at $t_{h'}^*$ \\ \hline 
+Logrank1  & $ 1 - \sum_{\ell=1}^{h}  \frac{d_{\ell}}{n_{\ell}}$ &
+$ -
+\sum_{\ell=1}^{h}
+\frac{d_{\ell}}{n_{\ell}}$
+\\
+(Logistic, Sun) &   \\
+Logrank2  &  $\frac{ n_h}{d_h } \left\{ -  \log \left( \frac{n_h - d_h}{n_h}
+\right) \right\}   +   \log
+\hat{S}(t_h^*)$  & $\log \left\{ \hat{S}(t_{h'}^*) \right\}$
+\\
+(Group Prop Hazards, Finkelstein) & \\ 
+Generalized WMW & 
+$\hat{S}(t_{h-1}^*) + \hat{S}(t_h^*) -1$
+%$\prod_{j=0}^{h-1} \left( \frac{ n_j - d_j }{n_j } \right)
+%+ \prod_{j=0}^{h} \left( \frac{ n_j - d_j }{n_j } \right) - 1 $
+& 
+%$\prod_{j=0}^{h'} \left( \frac{ n_j - d_j }{n_j } \right) -1$ \\
+$\hat{S}(t_{h'}^*) - 1 $ \\
+(Proportional Odds) & \\ \hline
+\end{tabular}
+%\end{table}
+
+
+\section{Application}
+\label{sec-application}
+
+The calls to the \pkg{interval} package are designed to be in the same style as in the \pkg{survival} package. 
+As noted in the previous section, the \code{icfit} and \code{ictest} functions will work on right censored data (see 
+\verb@\interval\demo\right.censored.examples.R\@). 
+We demonstrate the two main functions in \pkg{interval}, \code{icfit} and \code{ictest}, using the often cited 
+interval censored breast cosmesis data set of \cite{Fink:1985}. 
+
+\subsection{Survival Estimation}
+Here we calculate the NPMLE for each treatment group in the breast cosmesis data separately and print them out:
+<<>>=
+library(interval)
+data(bcos)
+fit1<-icfit(Surv(left,right,type="interval2")~treatment,data=bcos)
+summary(fit1)
+@
+
+These results match those calculated from \pkg{Icens}. The \code{summary} function applied to an \code{icfit} object gives the intervals which have positive probability in the NPMLE of the survival distribution function, i.e. where the estimated survival distribution
+drops; however, there are infinitely many functions which drop exactly the same increment within those intervals. The NPMLE is only unique outside of the intervals which are listed from the summary of the fit. 
+For example, there are infinitely many survival functions for the treatment=Rad group, that have
+$S(4)=1$ and $S(5)=1-0.0463= 0.9537$. Thus, as has been done in the \code{Icens} package, when plotting the NPMLEs we 
+denote the areas with the indeterminite 
+drops with grey rectangles. The function which linearly interpolates the survival within these indeterminte regions is also displayed on the graph. We plot the NPMLE for each treatment group using \code{plot(fit1)} to get Figure~\ref{fig:npmle.strat}.
+
+\begin{figure}
+\centering
+\caption{Non-parametric Maximum Likelihood Survival from Breast Cosmesis Data} 
+\label{fig:npmle.strat}
+<<fig=TRUE,echo=FALSE>>=
+plot(fit1)
+@
+\end{figure}
+
+\subsection{Two-sample Weighted logrank tests}
+
+There are three score tests available in \code{ictest}, which are selected by setting the \code{scores} argument to be one of "logrank1", "logrank2", or "WMW".  As stated in Section~\ref{sec-details}, the two forms of the logrank scores are the 
+scores associated with \cite{Fink:1986} and the scores associated with \cite{Sun:1996}. Although \cite{Fink:1986} are perhaps more natural 
+for interval censored data, we make those of \cite{Sun:1996} the default (\code{scores}="logrank1" or equivalently \code{rho}=0) since these 
+scores reduce to the usual logrank scores with right censored data. The default method is the permutation test, 
+and since the sample size is sufficiently
+large we automatically get the version based on the permutational central limit theorem:  
+<<>>=
+icout<-ictest(Surv(left,right,type="interval2")~treatment,data=bcos)
+icout
+@
+
+Because a major part of the calculation of the test statistic is 
+solving the NPMLE under the null hypothesis
+(i.e., for the pooled treatment groups), this NPMLE is saved as part of the output so that 
+we can calculate  this NPMLE once and reuse it for the calculation of the other two score tests. 
+Here is code for the Finklestein logrank formulation:
+<<>>=
+ictest(Surv(left,right,type="interval2")~treatment,data=bcos,
+initfit=icout$fit,scores="logrank2")
+@
+Notice how the two different logrank tests give very similar results. We demonstrate the third score test, the generalization of the Wilcoxon-Mann-Whitney 
+scores to interval censored data, and also demonstrate 
+the \code{ictest} function in default mode:
+<<>>=
+L<-bcos$left
+R<-bcos$right
+trt<-bcos$treatment 
+ictest(L,R,trt,scores="wmw",initfit=icout$fit)
+@ 
+
+\subsection{K-sample and trend tests}
+
+We can perform $k-sample$ tests using the \code{ictest} function. We create fake treatment assignments with four treatment groups to demonstrate.
+<<>>=
+set.seed(1232)
+fakeTrtGrps<-sample(letters[1:4],dim(bcos)[[1]],replace=TRUE)
+ictest(L,R,fakeTrtGrps)
+@
+When \code{scores}$="wmw"$ and the responses are all non-overlapping intervals then this reduces to the Kruskal-Wallis test. 
+The function \code{ictest} performs a trend test when the covariate is numeric. The one-sided test with \code{alternative}$="less"$ rejects when the 
+correlation between the  generalized rank scores (e.g., WMW scores or logrank scores) and the covariate are small. 
+<<>>=
+set.seed(931)
+fakeZ<-rnorm(dim(bcos)[[1]])
+ictest(L,R,fakeZ,alternative="less")
+@
+
+\subsection{Exact permutation tests}
+
+We can also estimate the exact permutation p-value for any score choice in \pkg{ictest} using the \code{exact} argument. 
+Here the logrank test using \cite{Sun:1996} scores is redone as an exact test:
+<<>>=
+ictest(Surv(left,right,type="interval2")~treatment,data=bcos,exact=TRUE,scores="logrank1")
+@
+The exact argument automatically chooses between an exact calculation by network algorithm or an approximation to the 
+exact p-value by Monte Carlo through the \code{methodRuleIC1} function. In this case the network algorithm was expected to take too 
+long and the Monte Carlo approximation was used. If a more accurate approximation to the exact p-value is needed then more Monte Carlo 
+simulations could be used and these are changed using the \code{mcontrol} option. 
+
+\subsection{Other test options}
+
+All of the above are permutation based tests, but we may use other methods. 
+Here are the results from the 
+usual score test for interval censored data:
+<<>>=
+ictest(Surv(left,right,type="interval2")~treatment,data=bcos,initfit=icout$fit,method="scoretest",scores="logrank2")
+@
+where in this case the nuisance parameters are defined after calculation of the NPMLE as described in 
+\cite{Fay:1996}, and the results agree exactly with \cite{Fay:1996} and are similar to those in \cite{Fink:1986}. The 
+very small differences may be due to differing convergence criteria in the NPMLE.  
+The imputation method of \cite{Huan:2008} may also be employed (note that \code{scores}="logrank2" are not available for this method):
+<<>>=
+ictest(Surv(left,right,type="interval2")~treatment,data=bcos,initfit=icout$fit,method="wsr.HLY",mcontrol=mControl(nwsr=99),scores="logrank1")
+@
+These results agree  with \cite{Huan:2008}  within the error to be expected from such an imputation method (\cite{Huan:2008} had $p=0.0075$).
+
+\section{Nonparametric Estimator of Survival}
+\label{sec-NPMLE}
+
+For each of the tests in \code{ictest}, the NPLME survival function must be obtained. 
+There are many algorithms for calculating the NPMLE from interval censored data (i.e., $\hat{S}$), 
+including several options in the \pkg{Icens} package. In our \pkg{interval} package, we provide an internally 
+calculated estimate and give the user the option for an externally obtained estimate,  
+say from the existing package \pkg{Icens}, to be supplied to \pkg{ictest}. 
+For the internal (default) calculation, we use a self-consistent algorithm,
+which is an EM-algorithm applied to interval censored data (see \cite{Turn:1976}); however, 
+first there is a primary reduction (see \cite{Arag:1992}).  Also, as recommended in \cite{Gent:1994}, to speed up 
+computations,
+we provisionally set the probability in some intervals to zero if they are below some bound, then check the  
+Kuhn-Tucker conditions to make sure that those values are really very close to zero. If those conditions are not met then the small
+probability is added back on and the iterations continue. 
+Convergence is defined when the maximum reduced gradient is less than some minimum error, and the 
+Kuhn-Tucker conditions are approximately met (see \cite{Gent:1994}). 
+
+We test in \verb@\demo\npmle.R@ that the NPMLE from the \pkg{Icens} package match with those from the 
+\pkg{interval} package. In that file we compare the NPMLE from the cosmesis data set. We additionally simulate 30 other data
+sets and show that the NPMLE's match for all the simulated data sets (data not shown).
+
+To demonstrate the software we take an artificial example with hypothetical data where we can calculate the NPMLE  exactly. 
+We include group membership to validate the logrank tests in the next section.
+Consider the data set with: 
+<<>>= 
+L<-c(2,5,1,1,9,8,10)
+R<-c(3,6,7,7,12,10,13)
+group<-c(0,0,1,1,0,1,0)
+example1<-data.frame(L,R,group)
+example1
+@
+The NPMLE using all the data is: 
+
+\begin{tabular}{ccc}
+$(L$ & $R]$ & probability \\ \hline 
+2 & 3 & $\frac{2}{7}$ \\
+5 & 6 & $\frac{2}{7}$ \\
+9 & 10 & $\frac{3}{14}$ \\
+10 & 12 & $\frac{3}{14}$ \\
+\end{tabular}
+
+We calculate this with the \pkg{interval} package as 
+<<>>=
+library(interval)
+summary(icfit(L,R),digits=12)
+@
+which matches the exact to at least 12 digits:
+<<>>=
+print(3/14,digits=12)
+@
+Usually the fit will not be this close, and the closeness of the fit is determined by the \code{icfitControl} list (see the help).  
+In Section~\ref{sec-interacting}, we provide an example to show how NPMLE survival estimates from other packages can be used by \code{ictest}.
+
+
+%\section{Permutation Test Calculation}
+
+\section{Permutation tests for interval censored data}
+\label{sec-perm}
+
+The package \pkg{interval} relies on our \pkg{perm} package to perform exact and asymptotic linear permutation tests of the logrank statistics. Appendix I provides a detailed 
+description of \pkg{perm}, including validation details for a set of standard statistical tests where the results from \pkg{perm} are compared to those from the widely used permutation test package \pkg{coin}. 
+In this section, we present an example
+which demonstrates a problem with the \pkg{coin} package that can occur with interval censored data and one that can be addressed appropriately with the \pkg{perm} package. 
+We consider the \code{example1} data set from Section \ref{sec-NPMLE} to elucidate the issue. 
+The problem relates to the numerical precision of the calculated scores 
+and subsequent permutation p-value when there is a
+ small number of permuations and ties in the scores (for interval censoring, stemming from overlapping intervals). While not unique
+to interval censored data, this combination of factors may be more common in this setting.
+
+We can calculate the exact scores for the Sun method (Eq (\ref{SunScore}); i.e. scores="logrank1") these are 
+\begin{eqnarray*}
+& & \left[ \frac{5}{7}, \frac{11}{35}, \frac{18}{35}, \frac{18}{35}, - \frac{24}{35}, -\frac{13}{70}, -\frac{83}{70}  \right]
+\end{eqnarray*}
+These scores sum to zero (as do all such scores regardless of the model).  There are $\left( \begin{array}{c} 7 \\ 3 \end{array} \right)=35$
+unique permutations with equal probability.  Note that the difference in means of the original scores, (with group=$[0,0,1,1,0,1,0]$), gives equivalent values to 
+the permutation
+with group=$[1,1,0,0,0,1,0]$ because the sum of the first and second scores equals the sum of the third and fourth scores. Thus, we have a tie 
+in the permutation distribution. We need to make sure the computer treats it as a tie otherwise the p-value will be wrong. 
+Dealing with ties in computer computations can be tricky (see R FAQ 7.31 at \\ \url{http://cran.r-project.org/doc/FAQ/R-FAQ.html}). To see the details, we completely enumerate all the sums of the 
+scores in one group. We use the function \code{chooseMatrix} from \pkg{perm} to generate the full list of permuations of the original \code{group} variable. We print out only the first $9$ of the $35$ ordered test statistics, 
+placing the difference in means in the 8th column, next to the permutation of the group allocation:
+<<>>=
+score1<-wlr_trafo(Surv(L,R,type="interval2"))
+cm<-chooseMatrix(7,3)
+T<- ( (1-cm) %*% score1 )/4 - ( cm %*% score1 )/3   
+cbind(cm,T)[order(T),][1:9,]
+@
+The seventh and eighth largest of the 35 test statistics are tied, and the eighth largest is equal to the original group assignment, so that the one sided 
+p-value is $8/35= 0.2286$. We see that \code{ictest} properly calculates this p-value while the \pkg{coin} 
+package version~\Sexpr{packageDescription("coin",fields="Version")} used on the scores does not:
+<<>>=
+ictest(L,R,group,alternative="less")
+library(coin)
+packageDescription("coin")$Version
+independence_test(score1~as.factor(group),alternative="less",distribution=exact())
+@ 
+The way that \pkg{perm} can directly address the ties issue is to allow the user to specify numerical precision, i.e. rounding to the nearest 
+\code{permControl()\$digits} significant 
+digits; and \pkg{perm} treats values of the permutation distribution that are tied for that many significant digits as true ties. 
+
+
+
+\section{Interacting with Other Packages}
+\label{sec-interacting}
+
+The focus of the \pkg{interval} and \pkg{perm} packages has been accuracy rather than speed; however, faster calculations can be 
+performed by incorporating some of the fast algorithms available in other packages. We allow an option for the user to provide the NPMLE for survival as input, both to increase the calculation speed and also the flexibility of the package to use other estimates for the NPMLE, such as those provided by the \code{Icens} package. 
+
+The major computation time for the \code{ictest} function when the sample size is large and the permutational central limit
+theorem may be used is the calculation of the NPMLE from all 
+treatment groups combined. Although the \pkg{interval} package (which requires the \pkg{perm} and 
+\pkg{survival} packages) can calculate the NPMLE fairly quickly,
+there are other algorithms which may be faster available in the \pkg{Icens} package. One algorithm available is the 
+hybrid EM ICM (Iterative convex minorant) estimator of the distribution function proposed by \cite{Well:1997}. 
+We now show how the \code{EMICM} function may be used together with \code{ictest} by employing the \code{initfit} opiton and compare this to 
+the \code{icfit} function used the same way. We again use the \code{bcos} data, and see the resulting 
+p-value is the same, but the \code{EMICM} algorithm is faster. Note since we use the \code{initfit} option within \code{ictest}, the 
+method that first calls \code{EMICM} converges is at least as close to the true NPMLE compared to the single call to \code{ictest}. This 
+noninferiority of convergence is due to the fact that both calls to \code{ictest} use the same  
+default \code{icfitControl} option, but the \code{EMICM} result may have already converged 
+closer to the NPMLE than required by the convergence criteria
+of the default \code{icfitControl}.
+<<>>=
+ictest.alone<-function(){
+    ictest(Surv(left,right,type="interval2")~treatment,data=bcos)$p.value
+}
+library(Icens)
+emicm.first<-function(){
+    npmle<-EMICM(bcos[,c("left","right")]) 
+    ictest(Surv(left,right,type="interval2")~treatment,data=bcos,initfit=npmle)$p.value
+}
+ictest.alone()
+emicm.first()
+system.time(ictest.alone())
+system.time(emicm.first())
+@
+
+When an exact test is desired, then there are some algorithms in the \pkg{coin} package which will likely be faster than the 
+network algorithm in the \pkg{perm} package.  We take the first 12 subjects in each treatment group from \code{bcos} in order to 
+compare the exact methods. From \pkg{interval}, we use the \code{wlr_trafo} function to calculate the WLR scores for the interval 
+censored data and 
+use \code{independence_test} from \pkg{coin}, as well as \code{ictest}, to calculate the permutation p-value from the scores. 
+<<>>=
+c12<- bcos[c(1:12,47:58),]
+ictest(Surv(left,right,type="interval2")~treatment,data=c12,method="exact.network",alternative="less")
+independence_test(wlr_trafo(Surv(left,right,type="interval2"))~treatment,data=c12,distribution=exact(),alternative="less")
+system.time(ictest(Surv(left,right,type="interval2")~treatment,data=c12,method="exact.network",alternative="less"))
+system.time(independence_test(wlr_trafo(Surv(left,right,type="interval2"))~treatment,data=c12,distribution=exact(),alternative="less"))
+@
+We see that in fact, the \pkg{coin} package does give the same answer considerably faster. Note that the network algorithm in \pkg{perm} 
+was written in \proglang{R} instead of calling faster code in \proglang{C} as was done in \pkg{coin} using a different algorithm. 
+Though we leave this choice up to the user, if there are ties in the permutation distribution, the \pkg{coin} package
+should be used with some caution (see Section~\ref{sec-perm}).
+
+
+
+\bibliography{interval}
+
+
+\section*{Appendix I: Perm Package}
+The \pkg{perm} package is a stand alone package to perform linear permutation tests, i.e. permutation tests
+where the test statistic is either of the form, 
+\begin{eqnarray*}
+T({\bf y},{\bf x}) & = & \sum_{i=1}^{n} c_i z_i
+\end{eqnarray*} 
+as in equation~\ref{eq:perm}, or of a quadratic version of $T({\bf y},{\bf x})$ (e.g., see $k$-sample tests below). Currently, there are three 
+permutation tests available in \pkg{perm}: \code{permTS} to perform two sample tests, \code{permKS} to perform K-sample  tests, \code{permTREND} to 
+perform trend tests on numeric values. In Section~\ref{sec-perm}, we provided an example with interval censored data where the existing permutation \pkg{coin} 
+was problematic. In this section, we provide more standard examples of these three classical permutation tests and demonstrate that both \pkg{perm} and the existing \pkg{coin} package provide identical results. 
+
+We consider only the case where $c_i$ is a scalar and $z_i$ is either a scalar or a $k \times 1$ vector 
+(although more general cases are studied in \cite{Sen:1985}, see also \cite{Hoth:2006}).
+Following \cite{Sen:1985}, we can write the mean and variance of $T$ under the permutation distribution  (i.e., permute indices of 
+$c_1,\ldots, c_n$ and recalculate $T$, where there are $n!$ different permutations with each equally likely) as, 
+\begin{eqnarray*}
+U = E_P(T) & = & n \bar{c} \bar{z} \\
+& \mbox{} & \\
+V = Var_P(T) & = & \frac{1}{n-1} \left\{ \sum_{i=1}^{n} (c_i - \bar{c} )^2 \right\} \left\{ \sum_{j=1}^{n} (z_i - \bar{z}) (z_i - \bar{z})' \right\},  
+\end{eqnarray*}
+where $\bar{c}$ and $\bar{z}$ are the sample means. \cite{Sen:1985} reviews the permutational central limit theorem (PCLT) which shows that 
+under the permutation distribution with standard regularity conditions on the $c_i$ and $z_i$,
+$V^{-1/2} (T-U)$ is asymptotically approximately multivariate normal with mean 0 and variance the identity matrix. 
+
+In the \pkg{perm} package, if $z_i$ is a scalar we define the one-sided p-value when \code{alternative}="greater" 
+ as 
+\begin{eqnarray*}
+p_G = \frac{ \sum_{i=1}^{n!} I(T_i \geq T_0) }{n!}, 
+\end{eqnarray*}
+where $I(A)=1$ when $A$ is true and 0 otherwise, $T_i$ is the $i$th of the $n!$ permutations, and $T_0$ is the observed value of $T$. 
+When \code{alternative}="less" then the p-value, say $p_L$, is given as above except we 
+reverse the direction of the comparison operator in the indicator function. Note that if you add or multiply by constants which do not change throughout 
+all permutations then the p-value does not change. Thus, a permutation test on $T$ can represent a test on the difference in means in the two-sample case,
+and can represent a test on the correlation when $z_i$ is numeric.  When 
+\code{alternative}="two.sided", then $p_2$ is twice the minimum one-sided p-value (i.e., $p_2=\min(1,2\min(p_L,p_G))$), 
+and when  \code{alternative}="two.sidedAbs" then 
+\begin{eqnarray*}
+p_{2A} = \frac{ \sum_{i=1}^{n!} I( |T_i-U| \geq |T_0-U|) }{n!}. 
+\end{eqnarray*}
+When $\bar{c}=0$ (as is the case with the weighted logrank $c_i$ values defined in Section~\ref{sec-details}) 
+then both two-sided p-values are equivalent. 
+Here is a two-sample permutation t-test in both \pkg{perm} and \pkg{coin} giving first the asymptotic, then the exact p-values: 
+<<>>=
+independence_test(extra~group, data=sleep)
+permTS(extra~group,data=sleep)
+independence_test(extra~group, data=sleep,distribution=exact())
+permTS(extra~group,data=sleep,method="exact.network")
+@
+
+When $z_i$ is a $k \times 1$ vector, we consider only the \code{alternative}="two.sided", 
+and reject when $Q=(T-U)' V^{-} (T-U)$ is large, where $V^{-}$ is the generalized 
+inverse of $V$. By the PCLT, $Q$ is asymptotically chi-squared with $k-1$ degrees of freedom. 
+In the \pkg{perm} package, when the covariate (represented by $z_i$) is a factor, 
+then $Q$ reduces a weighted sum of the squared means of the scores $c_i$ within each group.
+When $c_i$ is a rank, this gives the usual Kruskal-Wallis test.  
+For example,
+<<>>=
+kruskal.test(Ozone ~ Month, data = airquality)
+airq<-airquality[!is.na(airquality$Ozone),]
+permKS(rank(Ozone)~Month, data=airq)
+@
+(Note care must be taken when using \code{rank} with some missing responses, see help for \code{rank}). 
+If we wanted to take into account the ordering of the months and not rank the Ozone responses, 
+we could do a trend test, which is a test on the correlation that matches results from \pkg{coin} 
+and gives very similar results to the asymptotic test for Pearson's product moment 
+correlation coefficient in \code{cor.test} from the \pkg{stats} package:
+<<>>=
+permTREND(Ozone~Month, data=airq)
+library(coin)
+independence_test(Ozone~Month, data=airq)
+cor.test(airq$Ozone,airq$Month)
+@
+
+
+
+\end{document}
+
+

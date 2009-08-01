@@ -1,0 +1,4 @@
+0.7-5.5
+
+- comment out extra code in icScoreTest that caused problems in Rcmd check
+- change first parameter in wlr_trafo to x to remove Rcmd check problems 

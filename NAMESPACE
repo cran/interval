@@ -1,0 +1,20 @@
+export(icfit,ictest,SurvLR,getsurv,Aintmap,
+    wlr_trafo,icfitControl,methodRuleIC1,
+    scoresFromFit,icScoreTest,mControl,icWSR,
+    wsrMC,wsrHLYpclt)       
+
+import(survival,perm)
+
+S3method(print, ictest)
+S3method(plot,icfit)
+S3method(summary, icfit)
+S3method(print,icfit)
+S3method(`[`,icfit)
+S3method(icfit, formula)
+S3method(icfit, default)
+S3method(ictest, formula)
+S3method(ictest, default)
+S3method(wlr_trafo, default)
+S3method(wlr_trafo, Surv)
+
+

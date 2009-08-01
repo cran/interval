@@ -1,0 +1,4 @@
+check.error.messages 			checks that error messages make sense
+cosmesis.test 				does several tests on the breast cosmesis data
+npmle 					fits nonparametric maximum likelihood
+right.censored.examples 		shows that functions can be used with right censored data
