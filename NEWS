@@ -1,0 +1,33 @@
+
+        CHANGES in `interval' VERSION 0.9-9.5
+
+    o    overall changes
+         - add more comments to code
+         - edit main vignette according to comments from reviewers
+         - make changes to help according to the changes outlined below, and suggestions from reviewers
+    o    changes to icfit
+         - allow initfit to be the name of a function used to calculate the initfit
+         - make default initfit="initcomputeMLE", using the 'computeMLE' function from the MLEcens package.
+           This greatly increases the speed of the algorithm, but the original algorithm is kept.
+           Thus, we continue to do the checks on the Kuhn-Tucker conditions on the final estimate
+           and the initial fit need not be close to the final NPMLE.
+         - speed up each iteration of the EM algorithm by using matrix multiplication instead of
+           the apply function.
+         - output 'anypzero' as part of icfit objects created in icfit. The value 'anypzero' is  a logical
+           to denote if any probability masses where set to zero. In other words, when TRUE
+           there are parameters on the boundary of the parameter space and the ad hoc adjustment to the score test
+           method is used (as had been used in the previous versions and detailed in the help) when method="scoretest".
+         - program restructured. Aintmap function now outside of icfit function
+         - if A matrix has 1 column, gives correct values for pf: pf==c(1)
+    o    changes to wlr_trafo
+         - add method for data.frame so that it may be used easily with the coin package
+         - if length of pf=1, gives correct values for scores: all scores=0
+    o    changes to ictest
+         - add scores="normal" and "general" option, these work only with permutation methods
+         - if length of pf=1 from overall fit, gives correct p-value: p.value=1
+    o    changed getsurv to properly handle icfit objects that have more than one strata.
+
+        CHANGES in `interval' VERSION 0.7-5.5
+
+    o    comment out extra code in icScoreTest that caused problems in Rcmd check
+    o    change first parameter in wlr_trafo to x to remove Rcmd check problems

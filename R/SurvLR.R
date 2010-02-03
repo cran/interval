@@ -1,5 +1,7 @@
 `SurvLR` <-
 function(x){
+    ## change Surv object to data.frame with L and R columns
+    ## type=right, left or interval are allowed, type=counting is not
     type<-attr(x,"type")
     if (type=="right"){
         L<-R<-x[,1]

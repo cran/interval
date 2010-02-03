@@ -1,3 +1,0 @@
-1. Correct ictest so that when the results of icfit(L,R) have an intmap with only one innermost interval, then the p-value should be 1 for any test.
-
- 

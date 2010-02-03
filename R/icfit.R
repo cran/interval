@@ -29,8 +29,10 @@ function (formula, data,...)
         m[[1]] <- as.name("model.frame")
         m <- eval(m, parent.frame())
         n <- nrow(m)
+        ## left-hand-side of formula is "response"
         Y <- model.extract(m, "response")
         ## change survfit code next few lines
+        ## allow response to be numeric vector, treated as known time to event
         if (!is.Surv(Y)){
             if (is.numeric(Y) & is.vector(Y)) Y<-Surv(Y,rep(1,length(Y))) 
             else stop("Response must be a survival object or numeric vector")
@@ -59,6 +61,7 @@ function (formula, data,...)
             } 
             return(out)
         }
+        ## change original left-hand-side of formula to list with L and R vectors representing left and right endpoints
         Y<- SurvLR(Y)
         for (i in 1:nstrata){
              tempout<-icfit.default(Y$L[X==group[i]],Y$R[X==group[i]],...)
@@ -113,7 +116,15 @@ function (formula, data,...)
     # then intmap are values s[i] and s[i+1] where s[i] is 
     # associated with L and s[i+1] is associated with R
     oLR<-order(c(Le,Re+eps/2) )
+    # find the Turnbull intervals, or innermost intervals
+    # this is the same as the primary reduction of 
+    ### Aragon and Eberly (1992) J of Computational and Graphical
+    ###     Statistics 1:129-140
+    # label L=1 and R=2
     Leq1.Req2<-c(rep(1,n),rep(2,n))
+    # order and see if an R is followed by an L
+    # take difference of Leq1.Req2 after putting them in 
+    # order, then if the difference is 1 then the R=2 is followed by L=1 
     flag<- c(0,diff( Leq1.Req2[oLR] ))
     R.right.of.L<- (1:(2*n))[flag==1]
     intmapR<- c(L,R)[oLR][R.right.of.L]
@@ -137,6 +148,14 @@ function (formula, data,...)
         tempint<- Le[i]<=intmapRe & Re[i]>=intmapLe
         A[i,tempint]<-1
     }
+
+   # previous versions (<=0.9-9.1) did primary reduction twice,
+   # once as described in Turnbull (see above) and once as 
+   # described in Aragon and Eberly (1992, J of Computational and Graphical
+   #    Statistics 1:129-140) 
+   # both do same thing, so we do not need to do it twice
+
+
     out<-list(A=A,intmap=intmap)
     out
 }
@@ -145,7 +164,7 @@ function (formula, data,...)
 
 
 `icfit.default` <-
-function(L, R, initfit = NULL, control=icfitControl(), Lin=NULL, Rin=NULL,...)
+function(L, R, initfit = "initcomputeMLE", control=icfitControl(), Lin=NULL, Rin=NULL,...)
 {
     epsilon<-control$epsilon
     maxit<-control$maxit
@@ -155,117 +174,152 @@ function(L, R, initfit = NULL, control=icfitControl(), Lin=NULL, Rin=NULL,...)
     n<-dim(A)[[1]]
     k<-dim(A)[[2]]
     intmap<-AI$intmap
-    if (k>1){
-##################################################################
-### perform primary reductions on A  
-### see Aragon and Eberly (1992) J of Computational and Graphical
-###     Statistics 1:129-140 for discussion of primary reduction
-##################################################################
-	colsums <- apply(A, 2, sum)
-	pairmult <- rep(0, k - 1)
-	mark.to.keep <- rep(TRUE, k)
-	for(i in 1:(k - 1)) {
-		pairmult[i] <- sum(A[, i] * A[, i + 1])
-		if(pairmult[i] == colsums[i]) {
-			if(colsums[i] < colsums[i + 1]) {
-				mark.to.keep[i] <- FALSE
-			}
-		}
-		if(pairmult[i] == colsums[i + 1]) {
-			if(colsums[i] >= colsums[i + 1]) {
-				mark.to.keep[i + 1] <- FALSE
-			}
-		}
-	}
-	A <- A[, mark.to.keep]
-
-      LRin<-attr(intmap,"LRin")[,mark.to.keep]
-      intmap<-intmap[,mark.to.keep]
-      attr(intmap,"LRin")<-LRin
-     } # end primary reductions
-### come up with the initial estimates
-	if(is.null(initfit)) {
-		pbar <- apply(A/apply(A, 1, sum), 2, mean)
-	} else {
-            if (is.null(initfit$pf) | is.null(initfit$intmap)) stop("initfit should be list with elements pf and intmap")
-            nkeep<- dim(intmap)[[2]]
-            pbar<-rep(0,nkeep)
-            for (i in 1:nkeep){
-                index<-initfit$intmap[1,]==intmap[1,i] & initfit$intmap[2,]==intmap[2,i]
-                if (any(index)){
-                    if (length(initfit$pf[index])>1) stop("initfit has non-unique intmap columns")
-                    pbar[i]<- initfit$pf[index]
-                }               
+    if (k==1){
+        pf<-1
+        emout<-list(error=0,numit=0,converge=TRUE,message="normal convergence")
+        anypzero<-FALSE
+    } else {
+        ### come up with the initial estimates from the initfit option
+        ### may be (1) NULL, (2) character vector giving name of function, 
+        ### or (3) icfit or similar object
+        ### If of type (1) or (2) we first convert it to type (3) 
+        if(is.null(initfit)) {
+            pbar <- apply(A/apply(A, 1, sum), 2, mean)
+            initfit<-list(pf=pbar,intmap=intmap)
+        ## the following else section is for initfit functions
+        } else if (is.character(initfit) & length(initfit)==1){
+            ## because some initfit functions will input A and some will 
+            ## input L,R,Lin, and Rin, we input all 5 variables
+            ## but any initfit function need not use all 5
+            ## Get options for initfit function from control
+            initfitOpts<-control$initfitOpts
+            ## use try function in case initfit function fails
+            if (is.null(initfitOpts)){
+                initfit<-try( do.call(initfit,args=list(L=L,R=R,Lin=Lin,Rin=Rin,A=A)) )
+            } else {
+                initfit<-try( do.call(initfit,args=c(list(L=L,R=R,Lin=Lin,Rin=Rin,A=A),initfitOpts)) )
             }
-            if (sum(pbar)==0) stop("initfit has no matching intmap elements with L and R")
-            pbar<-pbar/sum(pbar)
-	}
-    em<-function(A,pbar,lower.bound=.01,startcount=1){
-        converge<-FALSE 
-        message<-"normal convergence"
-        A.pbar<-as.vector(A %*% pbar)
-        if (any(A.pbar==0)) stop("initfit$pf does not have nonzero values associated with needed intmap spaces")
-        for (i in startcount:maxit){
- 	      A.div.A.pbar <- A/A.pbar
-            newpbar<- apply(t(A.div.A.pbar)*pbar,1,mean)
-	      d <- apply(A.div.A.pbar, 2, sum)
-	      u <-  - d + n
-	      u[newpbar > 0] <- 0
-	      error <- max(d + u - n)
-            if (error<epsilon){
+            if (class(initfit)=="try-error"){
+                warning("initfit was a character, treated as a function name, and when called gave an error so will not be used")
+                pbar <- apply(A/apply(A, 1, sum), 2, mean)
+            } else {
+                if (is.null(initfit$pf)) stop("initfit treated as function and did not produce list with pf element")
+                ## if the initfit function outputs an intmap, check that it matches 
+                ## what we have already calculated
+                ## do not check attributes of intmap to allow functions that do not output that
+                initintmap<-initfit$intmap
+                pbar<-initfit$pf
+            } 
+            if (is.null(initfit$intmap)){ initfit<-list(pf=pbar,intmap=intmap)
+            } else initfit<-list(pf=pbar,intmap=initfit$intmap)
+        }
+
+        ### Check the initfit:
+        ## if the initfit has a different intmap but it has some elements that match 
+        ## (as would happen if the initfit function deleted values from the intmap with 0 mass)
+        ## the current intmap then we can still try this initfit, 
+        ## we use pbar proportional to the initfit$pf values of those intmaps values that match 
+        if (is.null(initfit$pf) | is.null(initfit$intmap)) stop("initfit should be either a character function name or a list with elements pf and intmap")
+        nkeep<- dim(intmap)[[2]]
+        pbar<-rep(0,nkeep)
+        for (i in 1:nkeep){
+            index<-initfit$intmap[1,]==intmap[1,i] & initfit$intmap[2,]==intmap[2,i]
+            if (any(index)){
+                if (length(initfit$pf[index])>1) stop("initfit has non-unique intmap columns")
+                pbar[i]<- initfit$pf[index]
+            }               
+        }
+        if (sum(pbar)==0) stop("initfit has no matching intmap elements with L and R")
+        pbar<-pbar/sum(pbar)
+
+        ## em is the em-algorithm, at any iteration if the estimate of the probability 
+        ## mass at any point is lower than the lower.bound, then that probability 
+        ## mass is set to zero. Then the Kuhn-Tucker conditions are checked, if they are 
+        ## not met then a small mass is added back to those values set to zero. This is the 
+        ## polishing methoded of 
+        ## Gentleman and Geyer (1994, Biometrika, 618-623)
+
+        ## start count keeps a running total of the number of iterations, since 
+        ## em may be called more than once with a different lower.bound 
+        em<-function(A,pbar,lower.bound=.01,startcount=1){
+            converge<-FALSE 
+            message<-"normal convergence"
+            A.pbar<-as.vector(A %*% pbar)
+            if (any(A.pbar==0)) stop("initfit$pf does not have nonzero values associated with needed intmap spaces")
+            J1<-matrix(1,n,1)
+            Jn<-matrix(1/n,n,1)
+            for (i in startcount:maxit){
+                tA.div.A.pbar <- t(A/A.pbar)
+                newpbar<- drop((tA.div.A.pbar * pbar) %*% Jn)
+                d<-drop(tA.div.A.pbar %*% J1)
+                # below is an older slower version 
+                #A.div.A.pbar <- A/A.pbar
+                #newpbar<- apply(t(A.div.A.pbar)*pbar,1,mean)
+                #d <- apply(A.div.A.pbar, 2, sum)
+                u <-  - d + n
+                u[newpbar > 0] <- 0
+                error <- max(d + u - n)
+                if (error<epsilon){
+                    pbar<-newpbar
+                    converge<-TRUE
+                    if(any(u < 0)){
+                        message<-"Kuhn-Tucker conditions not met, self-consistent estimator not MLE"
+                        #pbar[u<0]<-min(pbar[pbar>0])
+                        pbar[u<0]<-lower.bound
+                        pbar<-pbar/sum(pbar)
+                    }  
+                    break()
+                }
+                newpbar[newpbar<lower.bound]<-0
+                A.pbar<-as.vector(A %*% newpbar)
+                if (any(A.pbar==0)){ 
+                    message<-"lower bound too high"
+                    break()}
                 pbar<-newpbar
-                converge<-TRUE
-                if(any(u < 0)){
-		        message<-"Kuhn-Tucker conditions not met, self-consistent estimator not MLE"
-                    pbar[u<0]<-min(pbar[pbar>0])
-                    pbar<-pbar/sum(pbar)
-                } 
-               break()
+                if (i==maxit) message<-"maxit reached"
             }
-            newpbar[newpbar<lower.bound]<-0
-            A.pbar<-as.vector(A %*% newpbar)
-            if (any(A.pbar==0)){ 
-                message<-"lower bound too high"
-                break()}
-            pbar<-newpbar
-            if (i==maxit) message<-"maxit reached"
+            out<-list(A=A,pbar=pbar,count=i,message=message,converge=converge,error=error)
+            out
         }
-        out<-list(A=A,pbar=pbar,count=i,message=message,converge=converge,error=error)
-        out
-    }
 
-    ## try different values to "polish" the estimates, where if 
-    ## the jump in the distribution is less than the lower.bound then 
-    ## set it equal to zero. If it turns out that a jump should not 
-    ## have been set to zero, the em function checks that and spits out 
-    ## the last pbar before the jumps were set to zero 
-    ## (see Gentleman and Geyer, 1994)
-    lower.bounds<- 10^(0:ceiling(log10(epsilon)))
-    lower.bounds<-lower.bounds[lower.bounds<=max(1/n,epsilon)]
-    emout<-list(pbar=pbar,count=0)
-    for (lb in lower.bounds){
-        emout<-em(A,pbar=emout$pbar,lower.bound=lb,startcount=emout$count+1)
-
-        if (emout$message=="normal convergence") break()
-        if (emout$count==maxit) {
-		emout$message<-"problem with convergence, increase maxit"
-            break()
+        ## try different values to "polish" the estimates, where if 
+        ## the jump in the distribution (mass at any iterval) is less than the lower.bound then 
+        ## set it equal to zero. If it turns out that a jump should not 
+        ## have been set to zero, the em function checks that and spits out 
+        ## the last pbar before the jumps were set to zero 
+        ## (see Gentleman and Geyer, 1994)
+        lower.bounds<- 10^(0:ceiling(log10(epsilon)))
+        lower.bounds<-lower.bounds[lower.bounds<=max(1/n,epsilon)]
+        emout<-list(pbar=pbar,count=0)
+        for (lb in lower.bounds){
+            emout<-em(A,pbar=emout$pbar,lower.bound=lb,startcount=emout$count+1)
+            if (emout$message=="normal convergence") break()
+            if (emout$count==maxit) {
+                emout$message<-"problem with convergence, increase maxit"
+                break()
+            }
+            #print(emout$message)
         }
-        #print(emout$message)
-    }
-    keep<- !emout$pbar==0
-    if (!all(keep)){
-        LRin<-attr(intmap,"LRin")[,keep]
-        intmap<-intmap[,keep]
-        attr(intmap,"LRin")<-LRin
-        A<-A[,keep]
-    }
-    pf<-emout$pbar[keep]
+        keep<- !emout$pbar==0
+        anypzero<-FALSE
+        if (!all(keep)){
+            LRin<-attr(intmap,"LRin")[,keep]
+            intmap<-intmap[,keep]
+            attr(intmap,"LRin")<-LRin
+            A<-A[,keep]
+            anypzero<-TRUE
+        }
+        pf<-emout$pbar[keep]
+    } # end else for k>1
     strata<-length(pf)
+    ## if the A matrix corresponding to the non-zero pf values is full rank, then the NPMLE is mixture unique
+    ## see Gentleman and Geyer, 1994, Biometrika 618- or Gentleman and Vandal, 2002 Can J Stat, 557- 
+    ## DO NOT NEED THIS for univariate interval censored data because it will always be mixture unique
+    ## munique<-qr(A)$rank==dim(A)[2]
     # if there is only one strata, title describes output:  NPMLE
     names(strata)<-"NPMLE"
     out <- list(A=A, strata=strata, error = emout$error, numit = emout$count, pf = pf, intmap = 
-        intmap, converge= emout$converge, message= emout$message)
+        intmap, converge= emout$converge, message= emout$message, anypzero=anypzero)
     class(out)<-c("icfit","list")
     return(out)
 }

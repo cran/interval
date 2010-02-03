@@ -1,7 +1,7 @@
 export(icfit,ictest,SurvLR,getsurv,Aintmap,
     wlr_trafo,icfitControl,methodRuleIC1,
     scoresFromFit,icScoreTest,mControl,icWSR,
-    wsrMC,wsrHLYpclt)       
+    wsrMC,wsrHLYpclt,initcomputeMLE,initEMICM)       
 
 import(survival,perm)
 
@@ -16,5 +16,7 @@ S3method(ictest, formula)
 S3method(ictest, default)
 S3method(wlr_trafo, default)
 S3method(wlr_trafo, Surv)
+S3method(wlr_trafo, data.frame)
+
 
 

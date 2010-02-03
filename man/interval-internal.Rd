@@ -16,7 +16,7 @@ icScoreTest(icFIT, group, scores, alternative = "two.sided", tol.svd = 10^-8)
 icWSR(fit, group, scores, alternative, type, control)
 wsrHLYpclt(A, p, x, group, alternative, nwsr, type, RHO)
 wsrMC(A, p, x, group, alternative, nwsr, np, digits = 12)
-scoresFromFit(icFIT, scores)
+scoresFromFit(icFIT, scores, dqfunc=NULL)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -35,6 +35,8 @@ scoresFromFit(icFIT, scores)
 \item{A}{A matrix from icfit object on all data}
 \item{p}{pf vector from icfit object on all data}
 \item{x}{vector of scores associated with each value of p}
+\item{dqfunc}{function, density of the results of the quantile function, e.g., function(x){dnorm(qnorm(x))} (used for 'general' scores, 
+see \code{\link{ictest}})}
 }
 %\details{%%  ~~ If necessary, more details than the description above ~~}
 %\value{}

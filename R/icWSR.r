@@ -4,11 +4,14 @@ wsrMC<-function(A,p,x,group,alternative,nwsr,np,digits=12){
         ug<-unique(group)
         ng<-length(ug)
     }
+    ## sample within subject in proportion to conditional probability density for that subject given subjects interval
     wsrResample<-function(Arow){
         sample(x,1,replace=TRUE,prob=Arow*p/sum(Arow*p) )
     }
     n<-dim(A)[1]
+    ## use a different test Statatistic (testStat function) for different type of group objects 
     if (ng==2){
+        ## two-sample tests
         n1<-length(group[group==ug[1]])
         n2<-n-n1
         z<- rep(NA,n)
@@ -16,8 +19,10 @@ wsrMC<-function(A,p,x,group,alternative,nwsr,np,digits=12){
         z[group==ug[2]]<- -1/n2    
         testStat<-function(x){ sum(x*z) }
     } else if (ng==0){
+        ## correlation tests
         testStat<-function(x){ sum(x*group) }
     } else {
+        ## k-sample tests
         testStat<-function(x){
             out<-0
             x<- x- mean(x)
@@ -28,7 +33,8 @@ wsrMC<-function(A,p,x,group,alternative,nwsr,np,digits=12){
             out
         }
     }
-
+    ## Tij is a matrix of test statistics, 
+    ## Tij[i,j] is the ith within subject resample and the jth permutation
     Tij<-matrix(NA,nwsr,np+1)
     for (i in 1:nwsr){  
         Cj<-apply(A,1,wsrResample)
@@ -37,8 +43,10 @@ wsrMC<-function(A,p,x,group,alternative,nwsr,np,digits=12){
             Tij[i,j]<-testStat(Cj[sample(1:n,n,replace=FALSE)]) 
         }
     }
+    ## round to avoid problems with ties
     Tij<-signif(Tij,digits=digits)
     if (ng<=2){
+        ## one-sided tests make sense for ng<=2
         cnt.gte<-function(x){ length(x[x>=x[1]]) -1 }
         total.gte<-sum(apply(Tij,1,cnt.gte))
         p.gte<- (total.gte+1)/(nwsr*np+1)
@@ -56,6 +64,7 @@ wsrMC<-function(A,p,x,group,alternative,nwsr,np,digits=12){
             two.sided=p.twosided,
             two.sidedAbs=p.twosidedAbs)
     } else {
+        ## for k-sample tests one-sided tests do not make sense
         cnt.gte<-function(x){ length(x[x>=x[1]]) -1 }
         total.gte<-sum(apply(Tij,1,cnt.gte))
         p.twosided<- (total.gte+1)/(nwsr*np+1)
@@ -80,12 +89,18 @@ wsrHLYpclt<-function(A,p,x,group,alternative,nwsr,type,RHO){
             sample(x,1,replace=TRUE,prob=Arow*p/sum(Arow*p) )
         }
     }
+    ## Ui is the efficient score 
+    ## Vi is the associated variance
+    ## getUiVi.HLY uses usual martingale methods from survdiff
     getUiVi.HLY<-function(x,group,ng,RHO){
         lrtmp<-survdiff(Surv(x,rep(1,n))~group,rho=RHO)     
         Ui<-lrtmp$obs[1:(ng-1)] - lrtmp$exp[1:(ng-1)]
         Vi<-lrtmp$var[1:(ng-1),1:(ng-1)]
         list(Ui=Ui,Vi=Vi)
     }
+    ## getUiVi.pclt2 and getUiVi.pclt3 use permutational central limit theorem
+    ##     pclt2 for two-sample or less
+    ##     pclt3 for three-sample or more
     getUiVi.pclt2<-function(x,z,zbar,n){
         xbar<-mean(x)
         Ui<-sum(x*z) - n*xbar*zbar
@@ -198,7 +213,7 @@ wsrHLYpclt<-function(A,p,x,group,alternative,nwsr,type,RHO){
     out<-list(p.value=p.value,p.values=p.values,statistic=statistic,parameter=parameter)
     out
 }
-
+## main function for Within Subject Resampling
 icWSR<-function(fit,group,scores,alternative,type, control){
     nwsr<-control$nwsr
     np<-control$np

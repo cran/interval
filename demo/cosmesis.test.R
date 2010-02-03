@@ -8,7 +8,7 @@ trt<-bcos$treatment
 fit1<-icfit(Surv(L,R,type="interval2")~trt)
 legend.list<-plot(fit1)
 #do.call("legend",legend.list)
-plot(fit1)
+#plot(fit1)
 
 summary(fit1)
 iR<-EMICM(bcos[bcos$treatment=="Rad",c("left","right")])
@@ -80,6 +80,6 @@ dim(bcos)
 ## check subsetting
 set.seed(1)
 I<-rbinom(94,1,.5)==1
-ictest(Surv(left,right,type="interval2")~trt,initfit=fit,data=bcos,subset=I)
-ictest(bcos$left[I],bcos$right[I],trt[I],initfit=fit)
+icout<-ictest(Surv(left,right,type="interval2")~trt,data=bcos,subset=I)
+ictest(bcos$left[I],bcos$right[I],trt[I],initfit=icout$fit)
 

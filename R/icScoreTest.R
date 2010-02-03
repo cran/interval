@@ -88,6 +88,10 @@ icScoreTest<-function(icFIT,group,scores,alternative="two.sided",tol.svd=10^-8){
                 d2gdgam2[,u,u]<-(A[,u+1] - A[,u])*(-S[u])*(1-S[u])*(-1+2*S[u])
         }
     } else stop("model.int must be 1,2, or 3")
+    ## d2L.xxx are second derivatives of the log likelihood with respect to parameters
+    ##    d2L.dB2 - wrt beta
+    ##    d2L.dgam2 - wrt gamma
+    ##    d2L.dBdgam - wrt to beta and gamma
     d2L.dB2<-matrix(0,q,q)
     d2L.dgam2 <- matrix(0, m, m)
     d2L.dBdgam <- matrix(0, q, m)
@@ -101,6 +105,7 @@ icScoreTest<-function(icFIT,group,scores,alternative="two.sided",tol.svd=10^-8){
             (1/gg[i])* matrix(dgdgam[i,],m,1) %*% matrix(dgdgam[i,],1,m) )
         U <- U + x[i,  ] * cc[i]
     }
+    ## V is Fishers information variance estimate
     V <-  - (d2L.dB2 - d2L.dBdgam %*% solve(d2L.dgam2) %*% t(d2L.dBdgam))
 
     if (q==1 | q==2){ 
