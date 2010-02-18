@@ -64,7 +64,7 @@ function (formula, data,...)
         ## change original left-hand-side of formula to list with L and R vectors representing left and right endpoints
         Y<- SurvLR(Y)
         for (i in 1:nstrata){
-             tempout<-icfit.default(Y$L[X==group[i]],Y$R[X==group[i]],...)
+             tempout<-icfit.default(Y$L[X==group[i]],Y$R[X==group[i]],Lin=Y$Lin[X==group[i]],Rin=Y$Rin[X==group[i]],...)
              tempout$strata<-length(tempout$pf)
              names(tempout$strata)<-group[i]
              if (i==1){ icout<-tempout

@@ -18,7 +18,12 @@ function(x){
         R[x[,3]==3]<-x[x[,3]==3,2]
     } else { stop(paste("Surv obj type='",type,"' unrecognized",sep=""))
     }
-    out<-data.frame(L=L,R=R)
+    ## add Lin and Rin to work with right censored data
+    Lin<-rep(FALSE,length(L))
+    Rin<-rep(TRUE,length(L))
+    Lin[L==R]<-TRUE
+    Rin[R==Inf]<-FALSE
+    out<-data.frame(L=L,R=R,Lin=Lin,Rin=Rin)
     return(out)
 }
 

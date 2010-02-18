@@ -1,3 +1,9 @@
+        CHANGES in `interval' VERSION 0.9-9.6
+
+    o   fix problem with right censored data in icfit
+        - create Lin and Rin in SurvLR function
+        - in icfit.formula now use Lin and Rin in call to icfit.default   
+
 
         CHANGES in `interval' VERSION 0.9-9.5
 
