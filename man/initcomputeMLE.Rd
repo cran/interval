@@ -12,7 +12,7 @@ initfit function is the true NPMLE then convergence happens on the first iterati
 and A, but need not use all of them.
 }
 \usage{
-initcomputeMLE(L,R,Lin,Rin,A=NULL,max.inner=10,max.outer=1000,tol=1e-10)
+initcomputeMLE(L,R,Lin,Rin,A=NULL,max.inner=10,max.outer=1000,tol=1e-9)
 initEMICM(L=NULL,R=NULL,Lin=NULL,Rin=NULL,A=NULL,maxiter=1000,tol=1e-7)
 }
 \arguments{

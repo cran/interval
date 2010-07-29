@@ -1,3 +1,30 @@
+       CHANGES in `interval' VERSION 1.0-0.0
+
+ 
+   o   set tol=1e-09 in initcomputeMLE to avoid a very rare problem that occurred when calling computeMLE (version 0.1-3 of MLEcens). 
+       Thanks to M. Maathuis for the suggestion.  
+
+   o   fix getsurv so that it works when strata is missing from the icfit object.
+
+    o   fix [.icfit so that the attribute to the intmap is picked out when used
+
+    o   fix ictest so that it does not use alternative="two.sidedAbs" internally when calling perm package, so now it does not give warnings
+        when calling perm package. Make the package require use of perm (>=1.0) for the same reason.
+
+    o   make various changes to intervalPaper to meet JSS style.
+
+    o   in ictest: change alternative="two.sided" so that it will not be confused with the method in coin. Now instead of having a separate option 
+        for alternative called "two.sidedAbs", we drop that option and include another input, tsmethod, standing for two-sided method. 
+        So these are the same: 
+        Vers 0.9-9.6: alternative="two.sided"
+        Vers 1.0-0.0: alternative="two.sided" and tsmethod="central"
+
+        and these are the same:
+        Vers 0.9-9.6: alternative="two.sidedAbs"
+        Vers 1.0-0.0: alternative="two.sided" and tsmethod="abs"
+
+        The default is tsmethod="central". The structure here matches the exact2x2 and exactci packages.
+
         CHANGES in `interval' VERSION 0.9-9.6
 
     o   fix problem with right censored data in icfit

@@ -13,8 +13,8 @@ plot them, and \code{\link{ictest}} to perform logrank or Wilcoxon type tests.
 \tabular{ll}{
 Package: \tab interval\cr
 Type: \tab Package\cr
-Version: \tab 0.9-9.0\cr
-Date: \tab 2009-11-06\cr
+Version: \tab 1.0-0.0\cr
+Date: \tab 2010-07-29\cr
 License: \tab GPL 2\cr
 }
 }
@@ -23,7 +23,11 @@ Michael Fay
 
 Maintainer: M.P. Fay <mfay@niaid.nih.gov>
 }
-%\references{~~ Literature or other references for background information ~~}
+\references{
+    Fay, MP and Shaw, PA (2010). Exact and Asymptotic Weighted Logrank Tests for Interval Censored Data: The interval R package.
+    Journal of Statistical Software. \url{http://www.jstatsoft.org/v36/i02/}. 36 (2):1-34.
+
+}
 %~~ Optionally other standard keywords, one per line, from file KEYWORDS in ~~
 %~~ the R documentation directory ~~
 \keyword{ package }

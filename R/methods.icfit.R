@@ -218,6 +218,9 @@ function(x,i){
                 part<-X[(sum(strata[0:(i-1)])+1):sum(strata[0:i])]
             } else if (is.matrix(X)){
                 part<-X[,(sum(strata[0:(i-1)])+1):sum(strata[0:i])]
+                if (!is.null(attr(X,"LRin"))){
+                    attr(part,"LRin")<-attr(X,"LRin")[,(sum(strata[0:(i-1)])+1):sum(strata[0:i])]
+                }
             } else part<-X
             
             return(part)

@@ -1,4 +1,4 @@
-initcomputeMLE<-function(L,R,Lin=NULL,Rin=NULL,A=NULL,max.inner=10,max.outer=1000,tol=1e-10){
+initcomputeMLE<-function(L,R,Lin=NULL,Rin=NULL,A=NULL,max.inner=10,max.outer=1000,tol=1e-09){
     n<-length(L)
     ## computeMLE was developed for bivariate interval censored data
     ## but we can trick it into doing univariate by making the second

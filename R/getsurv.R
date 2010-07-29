@@ -16,9 +16,8 @@ function(times,icfit,nonUMLE.method="interpolation"){
             interpolation=function(i,Time){
                 if (R[i]==Inf) stop("cannot interpolate when R[i]=Inf")
                 S[i-1] + ((Time - L[i])/(R[i]-L[i]))*(S[i]-S[i-1])},
-            left=function(i,Time){ S[i-1]},
+            left=function(i,Time){ ifelse(i<=1,1,S[i-1]) },
             right=function(i,Time){ S[i]})
-
 
         k<-length(p)
         for (i in 1:ntimes){
@@ -30,6 +29,8 @@ function(times,icfit,nonUMLE.method="interpolation"){
                     Sout[i]<-nonUMLE.func(k,times[i])
                     mle[i]<-FALSE
                 } else {
+                    ## iLup is the index of the smallest L endpoint
+                    ## larger than times[i]
                     iLup<-min((1:k)[L>=times[i]])
                     if (R[iLup-1]<=times[i] | L[iLup]==times[i]) Sout[i]<-S[iLup-1]
                     else {
@@ -43,12 +44,17 @@ function(times,icfit,nonUMLE.method="interpolation"){
         out
     }
     
-    if (is.null(icfit$strata)) stop("icfit should have strata element")
+    if (is.null(icfit$strata)){
+        #stop("icfit should have strata element")
+        # instead of giving an error assume only one strata
+        icfit$strata<-c(length(icfit$pf))
+    }
     nstrata<-length(icfit$strata)
     strata<-icfit$strata
     cnt<-1
     for (i in 1:nstrata){
-        I<-cnt:strata[i]
+        ## fix bug, earlier had: I<-cnt:strata[i]
+        I<-cnt:(cnt+strata[i]-1)
         p<-icfit$pf[I]
         L<-icfit$intmap[1,I]
         R<-icfit$intmap[2,I]

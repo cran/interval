@@ -1,6 +1,8 @@
-`mControl`<- function(cm=NULL,nmc=10^3-1,seed=1234321,digits=12,p.conf.level=.99,
+`mControl`<- function(cm=NULL,nmc=10^3-1,seed=1234321,digits=12,
+    p.conf.level=.99,
     setSEED=TRUE,
-    tol.svd=10^-8,nwsr=10^3-1,np=10^3-1){
+    tol.svd=10^-8,nwsr=10^3-1,np=10^3-1,
+    tsmethod="central"){
     if (!is.numeric(nmc) || nmc <= 0) 
         stop("value of 'nmc' must be > 0")
     if (!is.numeric(digits) || digits <= 0) 
@@ -20,8 +22,11 @@
     if (!is.logical(setSEED)){
         stop(" setSEED must be logical")
     }
+    if (!(class(tsmethod)=="character" & (tsmethod=="central" | tsmethod=="abs"))){
+        stop(" tsmethod must be 'central' or 'abs' ")
+    }
 
     list(cm=cm,nmc=nmc,seed=seed,digits=digits,p.conf.level=p.conf.level,
         setSEED=setSEED,
-        tol.svd=tol.svd,nwsr=nwsr,np=np)    
+        tol.svd=tol.svd,nwsr=nwsr,np=np,tsmethod=tsmethod)    
 }

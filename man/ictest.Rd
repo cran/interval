@@ -27,7 +27,7 @@ The function calls the \code{\link{icfit}} function, if an icfit object is not p
 \method{ictest}{default}(L, R, group,  
     scores = c("logrank1","logrank2","wmw","normal","general"),
     rho=NULL,
-    alternative= c("two.sided", "less", "greater","two.sidedAbs"),   
+    alternative= c("two.sided", "less", "greater"),   
     icFIT=NULL,
     initfit="initcomputeMLE", 
     icontrol=icfitControl(),
@@ -69,7 +69,7 @@ The function calls the \code{\link{icfit}} function, if an icfit object is not p
 	methods give the same results.  }
   \item{scores}{character vector defining the scores: "logrank1" (default), "logrank2", "wmw" or others (see details)}
   \item{rho}{either 0 (gives scores="logrank1"), or 1 (gives scores="wmw"), ignored if NULL (see Note)}
-\item{alternative}{character giving alternative for two-sample and trend tests, K-sample should be two.sided} 
+\item{alternative}{character giving alternative for two-sample and trend tests, K-sample should be two.sided (see details)} 
  \item{icFIT}{a precalculated icfit object for increased computation speed. This should be the icfit from 
 the pooled data. Normally initfit should be used instead (see Warning)}
   \item{initfit}{an object of class icfit or icsurv or a character vector giving a function name, used for the initial estimate (see Warning). 
@@ -128,7 +128,9 @@ Because of theoretical difficulties (discussed below), the default method (metho
    perform a permutation test on the scores. There are several ways to perform the permutation 
 test, and the function \code{\link{methodRuleIC1}} chooses which of these ways will be used. The choice
 is basically between using a permutational central limit theorem (method="pclt") or using an exact method. 
-There are several algorithms for the exact method (see \code{\link[perm]{perm}} ). 
+There are several algorithms for the exact method (see \code{\link[perm]{perm}} ). Note that there are two 
+exact two-sided methods and the default is to essentially double the smaller of the one-sided p-values (tsmethod='central'), while the 
+default in the \code{coin} package is different (see \code{\link{mControl}} and the tsmethod option).  
    
 Another method is to perform a standard score test (method="scoretest").
 It is difficult to prove the asymptotic validity of the standard
@@ -155,7 +157,7 @@ within subject resampling (method="wsr.mc").
    variance is different, even Sun's method does not
    produce exactly the standard logrank test results. 
 
-
+Fay and Shaw (2010) gives the mathematical expressions for the different tests.
 }
 \value{
 	The function \code{wlr_trafo} returns only the numeric vector of scores, while 
@@ -209,6 +211,10 @@ of  result of \code{methodRule}. One of
    Fay, MP (1999). "Comparing Several Score Tests for 
    Interval Censored Data." Statistics in Medicine,
    18: 273-285 (Correction: 1999, 18: 2681).
+
+    Fay, MP and Shaw, PA (2010). Exact and Asymptotic Weighted Logrank Tests for Interval Censored Data: The interval R package.
+    Journal of Statistical Software. \url{http://www.jstatsoft.org/v36/i02/}. 36 (2):1-34.
+
 
    Finkelstein, DM (1986). "A proportional hazards 
    model for interval censored failure time data"

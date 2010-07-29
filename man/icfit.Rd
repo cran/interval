@@ -80,6 +80,7 @@ distribution (i.e., probabilities and the intervals where those
 probability masses are known to reside) for each group in the icfit object. There is also 
 a plot method, see \code{\link{plot.icfit}}.
 
+For additional references and background see Fay and Shaw (2010).
 }
 \value{
 An object of class \code{icfit} (same as icsurv class, see details). 
@@ -103,6 +104,9 @@ A list with elements:
     minorant algorithms for distribution estimation with 
     interval-censored data.  J. of Computational and Graphical 
     Statistics. 1: 129-140.
+
+    Fay, MP and Shaw, PA (2010). Exact and Asymptotic Weighted Logrank Tests for Interval Censored Data: The interval R package.
+    Journal of Statistical Software. \url{http://www.jstatsoft.org/v36/i02/}. 36 (2):1-34.
 
     Gentleman, R. and Geyer, C.J. (1994). Maximum likelihood 
     for interval censored data:consistency and computation. 

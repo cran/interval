@@ -6,7 +6,7 @@ A function to create a list of arguments for \code{\link{ictest}}.
 }
 \usage{
 mControl(cm=NULL,nmc=10^3-1,seed=1234321,digits=12,p.conf.level=.99,
-    setSEED=TRUE,tol.svd=10^-8,nwsr=10^3-1,np=10^3-1)
+    setSEED=TRUE,tol.svd=10^-8,nwsr=10^3-1,np=10^3-1,tsmethod="central")
 }
 \arguments{
 \item{cm}{a choose(n,m) by n matrix, used if method='exact.ce', ignored otherwise}
@@ -18,6 +18,7 @@ mControl(cm=NULL,nmc=10^3-1,seed=1234321,digits=12,p.conf.level=.99,
 \item{tol.svd}{tolerance for use in calculating g-inverse, values less than tol.svd are set to zero, used when method='scoretest'}
 \item{nwsr}{number of within subject resamples, used when method='wsr.mc', 'wsr.HLY', or 'wsr.pclt'}
 \item{np}{number of permutation replications within each wsr, used when method='wsr.mc'}
+\item{tsmethod}{two-sided method for exact permutation tests, either 'central' or 'abs' (see \code{\link[perm]{permControl}})}
 }
 \details{
 

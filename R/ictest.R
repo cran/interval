@@ -36,7 +36,7 @@ function (L, ...){
 function(L, R, group,  
     scores = c("logrank1","logrank2","wmw","normal","general"),
     rho=NULL,
-    alternative= c("two.sided", "less", "greater","two.sidedAbs"),   
+    alternative= c("two.sided", "less", "greater"),   
     icFIT=NULL,
     initfit="initcomputeMLE", 
     icontrol=icfitControl(),
@@ -48,6 +48,20 @@ function(L, R, group,
     Rin=NULL,
     dqfunc=NULL,...){
     
+    ### get names of variables for output, keep names short
+    call <- match.call()
+    getName<-function(CALL,defaultName=""){
+        Name<-as.character(CALL)
+        if (length(Name)>1 || nchar(Name)>10) Name<-defaultName
+        Name
+    }
+
+    L.name<-getName(call[[2]],"L")
+    R.name<-getName(call[[3]],"R")
+    group.name<-getName(call[[4]],"group")
+
+
+
     ## translate rho into scores
     if (!is.null(rho)){
         if (length(scores)!=5){ warning("scores ignored because rho is non-NULL") }
@@ -56,7 +70,32 @@ function(L, R, group,
         else stop("rho must be either NULL, 0 or 1")
     }
     
+    ## program originally written so that tsmethod="abs" was 
+    ## alternative="two.sidedAbs", changed to avoid confusion with coin package
+    if (alternative[1]=="two.sidedAbs"){
+        warning("alternative='two.sidedAbs' may be deprecated in the future,
+            use alternative='two.sided' and mcontrol=mControl(tsmethod='abs'))")
+        alternative<-"two.sided"
+        mcontrol$tsmethod<-"abs"
+    }
     alternative <- match.arg(alternative)
+
+    
+    if (alternative=="two.sided" & !(mcontrol$tsmethod=="central" | mcontrol$tsmethod=="abs")){
+        stop("only tsmethod='central' and tsmethod='abs' allowed")
+    }
+    ## create variable Alternative using old style 
+    ## (i.e., Alternative="two.sidedAbs" instead of new style: alternative="two.sided" and mcontrol$tsmethod="abs")
+    ## by keeping the old style internally, we do not need to change very much code
+    Alternative<-alternative
+    if (alternative=="two.sided"   & mcontrol$tsmethod=="abs"){
+        Alternative<-"two.sidedAbs"
+    } else if (alternative=="two.sided"  & mcontrol$tsmethod=="central"){
+        Alternative<-"two.sided"
+    }
+
+
+
     scores <- match.arg(scores)
     ## find NPMLE based on all the data (ignoring group membership)
     ## unless icFIT is not null
@@ -123,10 +162,10 @@ function(L, R, group,
     ## ng>2 is k-sample tests
     if (ng==0){ 
         if (method=="scoretest"){
-            pout<-icScoreTest(icFIT,group,scores,alternative,tol.svd=mcontrol$tol.svd)
+            pout<-icScoreTest(icFIT,group,scores,Alternative,tol.svd=mcontrol$tol.svd)
             TEST<-paste(TEST,"trend test(score form)")
        } else if (method=="wsr.mc" | method=="wsr.HLY" | method=="wsr.pclt"){
-           pout<-icWSR(icFIT,group,scores,alternative,type=method,control=mcontrol)
+           pout<-icWSR(icFIT,group,scores,Alternative,type=method,control=mcontrol)
             if (method=="wsr.mc"){
                 TEST<-paste(TEST,"trend test(WSR Monte Carlo)")
             } else if (method=="wsr.pclt"){
@@ -134,22 +173,23 @@ function(L, R, group,
             }
        } else {
             ## all other methods are permutation test methods using method options in permTREND
+            ## note permTREND uses new style for alternative (i.e., use alternative and mcontrol$tsmethod)
             pout <- do.call("permTREND", list(x=cc,y=group, alternative=alternative, 
                 exact=exact,method=method,control=mcontrol))
             TEST<-paste(TEST,"trend test(permutation form)")
         }
         ## alt.phrase is used to describe alternative hypothesis
-        alt.phrase<-switch(alternative,
+        alt.phrase<-switch(Alternative,
             two.sided="survival distributions not equal",
             two.sidedAbs="survival distributions not equal",
-            less=paste("higher independent variable implies earlier failure times than expected"),
-            greater=paste("higher independent variable implies later failure times than expected"))
+            less=paste("higher",group.name,"implies earlier event times"),
+            greater=paste("higher",group.name,"implies later event times"))
     } else if (ng==2){
         if (method=="scoretest"){
-            pout<-icScoreTest(icFIT,group,scores,alternative,tol.svd=mcontrol$tol.svd)
+            pout<-icScoreTest(icFIT,group,scores,Alternative,tol.svd=mcontrol$tol.svd)
             TEST<-paste(TEST,"two-sample test (score form)")
         } else if (method=="wsr.mc" | method=="wsr.HLY" | method=="wsr.pclt"){
-            pout<-icWSR(icFIT,group,scores,alternative,type=method,control=mcontrol)
+            pout<-icWSR(icFIT,group,scores,Alternative,type=method,control=mcontrol)
             if (method=="wsr.mc"){
                 TEST<-paste(TEST,"2-sample test(WSR Monte Carlo)")
             } else if (method=="wsr.pclt"){
@@ -159,6 +199,7 @@ function(L, R, group,
             }
        } else {
             ## all other methods are permutation test methods using method options in permTS
+            ## note permTS uses new style for alternative (i.e., use alternative and mcontrol$tsmethod)
             X<-cc[group==ug[1]]
             Y<-cc[group==ug[2]]
             pout <- do.call("permTS", list(x=X,y=Y, alternative=alternative, 
@@ -166,17 +207,17 @@ function(L, R, group,
             TEST<-paste(TEST,"two-sample test (permutation form)")
         }
         ## alt.phrase is used to describe alternative hypothesis
-        alt.phrase<-switch(alternative,
+        alt.phrase<-switch(Alternative,
             two.sided="survival distributions not equal",
             two.sidedAbs="survival distributions not equal",
-            less=paste(ug[2]," has earlier failure times than expected"),
-            greater=paste(ug[2]," has later failure times than expected"))
+            less=paste(ug[2]," has earlier event times"),
+            greater=paste(ug[2]," has later event times"))
     } else if (ng>2){
         if (method=="scoretest"){
-            pout<-icScoreTest(icFIT,group,scores,alternative,tol.svd=mcontrol$tol.svd)
+            pout<-icScoreTest(icFIT,group,scores,Alternative,tol.svd=mcontrol$tol.svd)
             TEST<-paste(TEST,"k-sample test (score form)")
         }  else if (method=="wsr.mc" | method=="wsr.HLY" | method=="wsr.pclt"){
-            pout<-icWSR(icFIT,group,scores,alternative,type=method,control=mcontrol)
+            pout<-icWSR(icFIT,group,scores,Alternative,type=method,control=mcontrol)
 
             if (method=="wsr.mc"){
                 TEST<-paste(TEST,"2-sample test(WSR Monte Carlo)")
@@ -199,16 +240,6 @@ function(L, R, group,
 
     } # end else associated with "if (all(cc==0))"
 
-    call <- match.call()
-    getName<-function(CALL,defaultName=""){
-        Name<-as.character(CALL)
-        if (length(Name)>1) Name<-defaultName
-        Name
-    }
-
-    L.name<-getName(call[[2]],"L")
-    R.name<-getName(call[[3]],"R")
-    group.name<-getName(call[[4]],"group")
     pout$data.name<-paste("{",L.name,",",R.name,"}"," by ",group.name,sep="")
 
     pout$method<-TEST    
