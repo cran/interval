@@ -193,6 +193,14 @@ function(L, R, initfit = "initcomputeMLE", control=icfitControl(), Lin=NULL, Rin
             ## but any initfit function need not use all 5
             ## Get options for initfit function from control
             initfitOpts<-control$initfitOpts
+
+            ## since initfit functions may not know how to interpret Lin=NULL and Rin=NULL create the values
+            if (is.null(Lin) & is.null(Rin)){
+                Lin<-rep(FALSE,length(L))
+                Rin<-rep(TRUE,length(L))
+                Lin[L==R]<-TRUE
+                Rin[R==Inf]<-FALSE
+            }
             ## use try function in case initfit function fails
             if (is.null(initfitOpts)){
                 initfit<-try( do.call(initfit,args=list(L=L,R=R,Lin=Lin,Rin=Rin,A=A)) )

@@ -99,6 +99,7 @@ function(L, R, group,
     scores <- match.arg(scores)
     ## find NPMLE based on all the data (ignoring group membership)
     ## unless icFIT is not null
+
     if (is.null(icFIT)){ 
         icFIT<-icfit(L,R, initfit, control=icontrol, Lin=Lin, Rin=Rin)
         if (icFIT$message!="normal convergence") warning("icFIT does not have normal convergence")   

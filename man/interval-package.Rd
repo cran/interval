@@ -13,8 +13,8 @@ plot them, and \code{\link{ictest}} to perform logrank or Wilcoxon type tests.
 \tabular{ll}{
 Package: \tab interval\cr
 Type: \tab Package\cr
-Version: \tab 1.0-0.0\cr
-Date: \tab 2010-07-29\cr
+Version: \tab 1.0-1.0\cr
+Date: \tab 2010-08-13\cr
 License: \tab GPL 2\cr
 }
 }
