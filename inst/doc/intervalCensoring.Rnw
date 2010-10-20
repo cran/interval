@@ -27,7 +27,7 @@ Censored Data:  The interval R package} %% without formatting
 %% an abstract and keywords
 \Abstract{
 This paper is a version of \cite{Fay+Shaw:2010} published in the {\it Journal of Statistical Software}, 
-and the versions are essentially the same except formating and this sentence. 
+and the versions are essentially the same except formating and changes to initfit defaults which may change some timings. 
 
 
 For right-censored data perhaps the most commonly used tests are weighted logrank tests, such as the

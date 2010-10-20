@@ -22,7 +22,7 @@
 function(x, R=NULL, 
     scores =c("logrank1","logrank2","wmw","normal","general"), 
     icFIT=NULL,
-    initfit="initcomputeMLE", 
+    initfit=NULL, 
     control=icfitControl(),
     Lin=NULL,
     Rin=NULL,

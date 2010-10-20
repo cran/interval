@@ -29,7 +29,7 @@ The function calls the \code{\link{icfit}} function, if an icfit object is not p
     rho=NULL,
     alternative= c("two.sided", "less", "greater"),   
     icFIT=NULL,
-    initfit="initcomputeMLE", 
+    initfit=NULL, 
     icontrol=icfitControl(),
     exact=NULL,
     method=NULL,
@@ -46,7 +46,7 @@ The function calls the \code{\link{icfit}} function, if an icfit object is not p
 
 \method{wlr_trafo}{default}(x, R=NULL, 
     scores = c("logrank1", "logrank2", "wmw","normal","general"), 
-    icFIT = NULL, initfit = "initcomputeMLE", control=icfitControl(),
+    icFIT = NULL, initfit =NULL, control=icfitControl(),
     Lin=NULL,Rin=NULL,dqfunc=NULL,\dots)
 
 \method{wlr_trafo}{Surv}(x,\dots)
@@ -248,8 +248,10 @@ wrong answers with no warnings if you input the wrong \code{icFIT} object. The s
 computational time is to input into \code{initfit} either a precalculated \code{icfit} object  or 
 an icsurv object from a function in the \code{Icens} package such as \code{\link[Icens]{EMICM}}. 
 When this is done, you will get either the correct answer or a warning even when you input a bad guess for the 
-\code{initfit}. Additionally, you may specify a function name for \code{initfit}. The default function is 
-\code{\link{initcomputeMLE}} which uses the \code{\link[MLEcens]{computeMLE}} function from the 'MLEcens' 
+\code{initfit}. Additionally, you may specify a function name for \code{initfit}. The default is NULL which 
+uses a simple initial fit function (it is a weighted average of the A matrix, see \code{icfit.default} code). 
+A fast but somewhat unstable function uses \code{\link{initcomputeMLE}} 
+which uses the \code{\link[MLEcens]{computeMLE}} function from the 'MLEcens' 
 package.
 See help for \code{\link{icfit}} for details on the \code{initfit} option.} 
 \seealso{ \code{\link{icfit}}, \code{\link[Icens]{EMICM}}, \code{\link[MLEcens]{computeMLE}} }

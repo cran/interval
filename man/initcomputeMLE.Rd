@@ -43,6 +43,10 @@ Here we define pf and intmap:
   \item{intmap}{2 by k matrix, where the ith column defines an interval 
         corresponding to the probability, pf[i]} 
 }
+\section{Warning}{
+In rare cases the  \code{\link[MLEcens]{computeMLE}} function (and hence the  \code{initcomputeMLE} function) can cause R to crash 
+(at least for version 0.1-3 of the \code{MLEcens} package).
+}
 %\references{  }
 \author{
 The wrappers for the functions were written by M. Fay, but the real work are the calculation engines:

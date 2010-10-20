@@ -164,7 +164,7 @@ function (formula, data,...)
 
 
 `icfit.default` <-
-function(L, R, initfit = "initcomputeMLE", control=icfitControl(), Lin=NULL, Rin=NULL,...)
+function(L, R, initfit = NULL, control=icfitControl(), Lin=NULL, Rin=NULL,...)
 {
     epsilon<-control$epsilon
     maxit<-control$maxit

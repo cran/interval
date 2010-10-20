@@ -14,7 +14,7 @@ the Kaplan-Meier estimate to interval censored data. Formulas using \code{Surv} 
 
 \method{icfit}{formula}(formula, data, \dots)
 
-\method{icfit}{default}(L, R,initfit ="initcomputeMLE", control=icfitControl(), Lin=NULL, Rin=NULL, \dots)
+\method{icfit}{default}(L, R,initfit =NULL, control=icfitControl(), Lin=NULL, Rin=NULL, \dots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -46,7 +46,7 @@ repeated n times, otherwise they should be logicals of length n.
     innermost intervals, and are the result of the primary reduction (see Aragon and 
     Eberly, 1992). The starting distribution for the E-M algorithm is given by \code{initfit}, which may be either 
  (1) NULL, in which case a very simple and quick starting distribution is used (see code), (2) a character vector 
-describing a function with inputs, L,R, Lin, Rin, and A, the default is \code{\link{initcomputeMLE}}, (3)
+describing a function with inputs, L,R, Lin, Rin, and A, see for example \code{\link{initcomputeMLE}}, (3)
 a list giving \code{pf} and \code{intmap} values, e.g., an \code{icfit} object. If option (2) is tried and results in an error then 
 the starting distribution reverts to the one used with option (1).
 Convergence is defined when the maximum 
