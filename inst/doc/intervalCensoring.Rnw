@@ -116,9 +116,9 @@ known to fall into an interval. An example is time to
 progression-free survival \citep[see e.g., ][]{Frei:2007}, where patients are monitored intermittently 
 and progression is known to have occurred only to within the time since the last visit. 
 
-A naïve approach, if one has interval-censored data, is to simply
+A naive approach, if one has interval-censored data, is to simply
 impute the mid-point of the intervals and perform the usual right-censored weighted logrank tests.
-\cite{Law:1992} studied this naïve approach
+\cite{Law:1992} studied this naive approach
 \citep[][use the
 term `doubly censored observations' to mean interval-censored
 observations]{Law:1992}, and showed through simulation that when the censoring mechanism is different between the two groups, the type I error of a nominal

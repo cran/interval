@@ -1,4 +1,10 @@
-        CHANGES in `interval' VERSION 1.0-1.1
+         CHANGES in `interval' VERSION 1.0-1.2
+ 
+   o   fix error in icfit when stratified data with at least one degenerate strata (i.e., NPMLE result for the degenerate strata is only one interval with pf=1 in that interval)
+   o   fix error in icfit when data are degenerate such that all left=0 and right=Inf, now gives correct NPMLE
+   o   remove non-ASCII characters (the i in naive) from Rnw file so that it passes checks.
+ 
+       CHANGES in `interval' VERSION 1.0-1.1
  
    o   change default for initfit in icfit, ictest, and wlr_trafo to NULL (avoids a rare problem with the initcomputeMLE function which could cause R to crash). Change help to explain this.
 

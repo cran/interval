@@ -155,6 +155,8 @@ function (formula, data,...)
    #    Statistics 1:129-140) 
    # both do same thing, so we do not need to do it twice
 
+    ## fix error when intmap=(0,Inf) and k=1, previously A was column matrix of 0, should be a column matrix of 1
+    if (k==1 & intmap[1,1]==0 & intmap[2,1]==Inf) A[A==0]<-1  
 
     out<-list(A=A,intmap=intmap)
     out
@@ -176,7 +178,8 @@ function(L, R, initfit = NULL, control=icfitControl(), Lin=NULL, Rin=NULL,...)
     intmap<-AI$intmap
     if (k==1){
         pf<-1
-        emout<-list(error=0,numit=0,converge=TRUE,message="normal convergence")
+        ### fix error 1/24/2011: needed to change name from numit to count in emout list 
+        emout<-list(error=0,count=0,converge=TRUE,message="normal convergence")
         anypzero<-FALSE
     } else {
         ### come up with the initial estimates from the initfit option
