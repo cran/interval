@@ -4,6 +4,7 @@
 \alias{scoresFromFit}
 \alias{wsrHLYpclt}
 \alias{wsrMC}
+\alias{icfitBootCI}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Internal functions
@@ -17,6 +18,7 @@ icWSR(fit, group, scores, alternative, type, control)
 wsrHLYpclt(A, p, x, group, alternative, nwsr, type, RHO)
 wsrMC(A, p, x, group, alternative, nwsr, np, digits = 12)
 scoresFromFit(icFIT, scores, dqfunc=NULL)
+icfitBootCI(L,R,conf.level=.95,B=100,timeEpsilon=10^-8,seed=19439101,messages=TRUE,...)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -37,6 +39,12 @@ scoresFromFit(icFIT, scores, dqfunc=NULL)
 \item{x}{vector of scores associated with each value of p}
 \item{dqfunc}{function, density of the results of the quantile function, e.g., function(x){dnorm(qnorm(x))} (used for 'general' scores, 
 see \code{\link{ictest}})}
+\item{L}{left endpoints}
+\item{R}{right endpoints}
+\item{conf.level}{confidence level for two-sided confidence interval}
+\item{B}{number of bootstrap replications}
+\item{timeEpsilon}{small amount of time added or subtracted from times, for plotting confidence intervals}
+\item{seed}{numeric, if non-NULL then calls set.seed for bootstrap so it will be repeatable.}
 }
 %\details{%%  ~~ If necessary, more details than the description above ~~}
 %\value{}

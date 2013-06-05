@@ -13,7 +13,9 @@ were the NPMLE is indeterminate as a gray rectangle.
 \usage{
 \method{plot}{icfit}(x,XLAB="time",YLAB=NULL,COL=gray((8:1)*.1),LTY=1:9,LEGEND=NULL,
     XLEG=NULL,YLEG=NULL,shade=TRUE,dtype="survival",
-    dlink=function(x){log(-log(1-x))},
+    dlink=function(x){log(-log(1-x))}, xscale=1, yscale=1, conf.int=NULL,
+    estpar=list( lty=NULL, lwd=1, col=gray(0)),
+    cipar=list( lty=1:9, lwd=1, col=gray(0.8)),
     ...)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -29,6 +31,12 @@ were the NPMLE is indeterminate as a gray rectangle.
   \item{shade}{logical, should the rectangles of indeterminate NPMLE be colored?}
   \item{dtype}{type of distribution plotted, one of 'survival', 'cdf' or 'link' (see details)}
   \item{dlink}{link function when dtype='link' (see details)}
+\item{xscale}{a numeric value used to multiply the labels on the x axis. So if the data are in days, then a value of 1/365.25 would give labels in years.}
+\item{yscale}{a numeric value used to multiply the labels on the y axis. A value of 100, for instance, would be used to give a percent scale. As in the survival package, only the labels are changed, 
+        not the actual plot coordinates}
+\item{conf.int}{logical, should confidence intervals be plotted? NULL plots them if they are present in x object and gives no errors if they are not.}
+\item{estpar}{list of par arguments for the estimated distribution lines. If lty=NULL uses LTY argument, otherwise ignores LTY (for backward compatability)}
+\item{cipar}{list of par arguments for the confidence interval lines}
   \item{\dots}{other arguments passed to the plot function}
 }
 \details{

@@ -15,16 +15,21 @@ function(times,icfit,nonUMLE.method="interpolation"){
         nonUMLE.func<-switch(method,
             interpolation=function(i,Time){
                 if (R[i]==Inf) stop("cannot interpolate when R[i]=Inf")
-                S[i-1] + ((Time - L[i])/(R[i]-L[i]))*(S[i]-S[i-1])},
+                ## fix May 9, 2013: had S[i-1] did not work when i==1
+                ## replace with 1
+                if (i==1){
+                    1 + ((Time - L[i])/(R[i]-L[i]))*(S[i]-1)
+                } else {
+                    S[i-1] + ((Time - L[i])/(R[i]-L[i]))*(S[i]-S[i-1])}},
             left=function(i,Time){ ifelse(i<=1,1,S[i-1]) },
             right=function(i,Time){ S[i]})
 
         k<-length(p)
         for (i in 1:ntimes){
-            if (any(times[i]==R)) Sout[i]<-S[times[i]==R]
-            else if (times[i]<=L[1]) Sout[i]<-1
-            else if (times[i]>=R[k]) Sout[i]<-0
-            else {
+            if (any(times[i]==R)){ Sout[i]<-S[times[i]==R]
+            } else if (times[i]<=L[1]){ Sout[i]<-1
+            } else if (times[i]>=R[k]){ Sout[i]<-0
+            } else {
                 if  (times[i]>L[k]){ 
                     Sout[i]<-nonUMLE.func(k,times[i])
                     mle[i]<-FALSE

@@ -52,8 +52,11 @@ function (formula, data,...)
         group<-levels(X)
         nstrata<-length(group)
         sbind<-function(x,y){
-            if (is.vector(x) & is.vector(y)) out<-c(x,y)
-            if (is.matrix(x) & is.matrix(y)) out<-cbind(x,y) 
+            if (is.vector(x) & is.vector(y)){
+                 if (class(x)=="list" & class(y)=="list"){ 
+                     out<-list(x,y)
+                 } else out<-c(x,y)
+            } else if (is.matrix(x) & is.matrix(y)) out<-cbind(x,y) 
             if (!is.null(attr(x,"LRin")) & !is.null(attr(y,"LRin"))){
                 xLRin<-attr(x,"LRin")
                 yLRin<-attr(y,"LRin")
@@ -164,8 +167,100 @@ function (formula, data,...)
 
 
 
+icfitBootCI<-function(L,R,conf.level=.95,B=100,timeEpsilon=10^-8,seed=19439101,messages=TRUE,...){
+    if (B<10) stop("B must be at least 10")
+    if (!is.null(seed)) set.seed(seed)
+    if (messages){
+        message("Confidence intervals use modified bootstrap, can be very time consuming.")
+        message("See icfitControl help, argument B, for changing the number of bootstrap replicates.")
+        utils::flush.console()
+    }
+    fit0<-icfit(L,R)
+    ## just get the bootstrap value at a little bit before and a little bit after each time
+    ## use timeEpsilon to define the little bit
+    eps<-timeEpsilon
+    times<-unique(c(0,as.vector(fit0$intmap)))
+    times<-c(0,times-eps,times+eps)
+    times<-sort(times[times>=0])
+    n<-length(L)
+
+    nt<-length(times)
+    LOWER<-UPPER<-matrix(NA,B,nt)
+
+    #fit0<-icfit(L,R)
+
+
+    ### time it so that have some idea of how long it will take
+    t0<-proc.time()
+    for (i in 1:10){
+        I<-sample(1:n,replace=TRUE)
+        fiti<-icfit(L[I],R[I],...)
+        LOWER[i,]<-getsurv(times,fiti,nonUMLE.method="right")[[1]]$S
+        UPPER[i,]<-getsurv(times,fiti,nonUMLE.method="left")[[1]]$S
+    }
+    t1<-proc.time()
+    if (messages){
+        message("Estimated time of one iteration (one stratum only): ",round((t1-t0)[1]/10,2)," sec")
+        message("Estimated time for all ",B," iterations  (one stratum only): ",
+             round((t1-t0)[1]*B/10,1)," sec")
+        utils::flush.console()
+    }
+
+
+    for (i in 11:B){
+        I<-sample(1:n,replace=TRUE)
+        fiti<-icfit(L[I],R[I],...)
+        LOWER[i,]<-getsurv(times,fiti,nonUMLE.method="right")[[1]]$S
+        UPPER[i,]<-getsurv(times,fiti,nonUMLE.method="left")[[1]]$S
+    }
+
+    percci<-function(Ti,conf.level=.95){
+        ### get percentile bootstrap confidence intervals
+        ### see Efron and Tibshirani, p. 160 bottom
+        alpha<- (1-conf.level)/2
+        B<-length(Ti)
+        k<-floor((B+1)*alpha)
+        if (k==0){
+             warning("increase number of bootstrap samples")
+             ci<-c(-Inf,Inf)
+        } else {
+            oTi<-Ti[order(Ti)]
+            ci<-oTi[c(k,B+1-k)]
+        }
+        ci
+    }
+    calclower<-function(x,CL=conf.level){ percci(x,conf.level=CL)[1] }
+    calcupper<-function(x,CL=conf.level){ percci(x,conf.level=CL)[2] }
+    lower<-apply(LOWER,2,calclower)
+    upper<-apply(UPPER,2,calcupper)
+
+    maxlower<-binom.test(n,n,conf.level=conf.level)$conf.int[1]
+    lower[lower>maxlower]<-maxlower
+    lower[lower<0]<-0
+
+    minupper<-binom.test(0,n,conf.level=conf.level)$conf.int[2]
+    upper[upper<minupper]<-minupper
+    upper[upper>1]<-1
+
+    list(time=times, lower=lower, upper= upper, confMethod="modboot", conf.level=conf.level)
+}
+
+
 
 `icfit.default` <-
+function(L, R, initfit = NULL, control=icfitControl(), Lin=NULL, Rin=NULL, conf.int=FALSE,...)
+{
+    out<-icfitCalc(L, R, initfit, control, Lin, Rin,...)
+    if (conf.int){
+        if (control$confMethod!="modboot") stop("only modified bootstrap confidence method available")
+        out$CI<-icfitBootCI(L,R,conf.level=control$conf.level, B=control$B, timeEpsilon= control$timeEpsilon, seed=control$seed, 
+            messages=control$timeMessage,...) 
+    }
+    out
+}
+
+
+`icfitCalc` <-
 function(L, R, initfit = NULL, control=icfitControl(), Lin=NULL, Rin=NULL,...)
 {
     epsilon<-control$epsilon

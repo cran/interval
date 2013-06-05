@@ -14,7 +14,7 @@ the Kaplan-Meier estimate to interval censored data. Formulas using \code{Surv} 
 
 \method{icfit}{formula}(formula, data, \dots)
 
-\method{icfit}{default}(L, R,initfit =NULL, control=icfitControl(), Lin=NULL, Rin=NULL, \dots)
+\method{icfit}{default}(L, R,initfit =NULL, control=icfitControl(), Lin=NULL, Rin=NULL, conf.int=FALSE, \dots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -28,6 +28,7 @@ the Kaplan-Meier estimate to interval censored data. Formulas using \code{Surv} 
           the right side of the formula may be 1 or a factor (which produces separate fits for each level). }
   \item{data}{an optional matrix or data frame containing the variables in the formula. By default the variables are taken from environment(formula).
 }
+\item{conf.int}{logical, estimate confidence interval? For setting conf.level, etc see \code{\link{icfitControl}}. (May take very long, see Warning)}
   \item{\dots}{values passed to other functions}
 }
 \details{
@@ -81,6 +82,14 @@ probability masses are known to reside) for each group in the icfit object. Ther
 a plot method, see \code{\link{plot.icfit}}.
 
 For additional references and background see Fay and Shaw (2010).
+
+
+The confidence interval method is a modified bootstrap. This can be very time consuming, see warning. The method uses a percentile bootstrap confidence interval with default B=200
+replicates (see  \code{\link{icfitControl}}), with modifications that prevent lower intervals of 1 and upper intervals of 0. Specifically, if there are 
+n observations total, then at any time the largest value of the lower interval for survival is binom.test(n,n,conf.level=control()$conf.level)$conf.int[1] and analogously 
+the upper interval bounds using binom.test(0,n). The output (CI element of returned list) gives confidence intervals just before and just after each 
+assessment time (as defined by icfitControl$timeEpsilon).
+
 }
 \value{
 An object of class \code{icfit} (same as icsurv class, see details). 
@@ -99,7 +108,12 @@ A list with elements:
   \item{converge}{a logical, TRUE if normal convergence}
   \item{message}{character text message on about convergence}
   \item{anypzero}{logical denoting whether any of the Turnbull intervals were set to zero}
+\item{CI}{if conf.int=TRUE included as a list of lists for each stratum, each one having elements time, lower, upper, confMethod, conf.level}
 }
+ \section{Warning }{The confidence interval method can be very time consuming because it uses a modified bootstrap and the NPMLE is recalculated for each replication.
+That is why the default only uses 200 bootstrap replications.
+A message gives a crude estimate of how long the confidence interval calculation will take (it calculates a per replication value by averaging the time of the first 10 replications), 
+but that estimate can be off by 100 percent or more because the time to calculate each bootstrap replication is quite variable. } 
 \references{    Aragon, J and Eberly, D (1992). On convergence of convex 
     minorant algorithms for distribution estimation with 
     interval-censored data.  J. of Computational and Graphical 

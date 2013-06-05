@@ -1,7 +1,7 @@
 export(icfit,ictest,SurvLR,getsurv,Aintmap,
     wlr_trafo,icfitControl,methodRuleIC1,
     scoresFromFit,icScoreTest,mControl,icWSR,
-    wsrMC,wsrHLYpclt,initcomputeMLE,initEMICM)       
+    wsrMC,wsrHLYpclt,initcomputeMLE,initEMICM,icfitBootCI)       
 
 import(survival,perm)
 

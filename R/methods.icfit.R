@@ -54,7 +54,23 @@
 `plot.icfit` <-
 function(x,XLAB="time",YLAB=NULL,COL=gray((8:1)*.1),LTY=1:9,LEGEND=NULL,
     XLEG=NULL,YLEG=NULL,shade=TRUE,dtype="survival",
-    dlink=function(x){log(-log(1-x))},...){
+    dlink=function(x){log(-log(1-x))}, xscale=1, yscale=1,
+    conf.int=NULL, 
+    estpar=list(lty=NULL,lwd=1,col=gray(0)),
+    cipar=list(lty=1:9,lwd=1,col=gray(.8)),...){
+
+   ## for backward compatability, keep LTY argument in
+   ## but if estpar$lty is not null, ignore LTY argument
+   if (is.null(estpar$lty)) estpar$lty<-LTY
+
+   if (is.null(conf.int)){
+       if (any(names(x)=="CI")){
+           conf.int<-TRUE
+       } else { 
+           conf.int<-FALSE
+       }
+   }
+   if (!is.logical(conf.int)) stop("conf.int should be NULL, TRUE or FALSE")
 
    ## time is union of 0 and all left and right endpoints
    time<-c(0,as.vector(x$intmap)) 
@@ -93,26 +109,70 @@ function(x,XLAB="time",YLAB=NULL,COL=gray((8:1)*.1),LTY=1:9,LEGEND=NULL,
     }
 
     YLIM<-calc.ylim(x)
-    plot(range(time[time!=Inf]),YLIM,type="n",xlab=XLAB,ylab=YLAB,...)
+    if (xscale==1 & yscale==1){
+        plot(range(time[time!=Inf]),YLIM,type="n",xlab=XLAB,ylab=YLAB,...)
+    } else {
+        plot(range(time[time!=Inf]),YLIM,type="n",xlab=XLAB,ylab=YLAB,axes=FALSE,...)
+        xticks<-pretty(xscale*range(time[time!=Inf]))
+        ylim<-eval(match.call()$ylim)
+        if (is.null(ylim)){   yticks<-pretty(yscale*YLIM)
+        } else  yticks<-pretty(yscale*ylim)
+        axis(1,at=xticks/xscale,labels=xticks)
+        axis(2,at=yticks/yscale,labels=yticks)
+    }
 
-
+    ## pick out ith par values and make a list out of them
+    pickpari<-function(parlist,i){
+        picki<-function(x,i){
+            if (length(x)>=i){ out<-x[i]
+            } else if (length(x)>=1){
+                out<-x[1]
+            } else { out<-1
+            }
+            out
+        }
+        outlist<-parlist
+        n<-length(parlist)
+        for (j in 1:n){
+            outlist[[j]]<-picki(parlist[[j]],i)
+        }
+        outlist
+    }
+    
    ## lines.icfit puts in lines 
-    lines.icfit<-function(x,LTY){
-        time<-c(0,as.vector(x$intmap))
-        S<-c(1,1-cumsum(x$pf))
-        S<-rep(S,each=2)[-2*length(S)]
-        time[time==Inf]<-max(time)
+    lines.icfit<-function(x,i,parlist=estpar,type="est"){
+        parlist<-pickpari(parlist,i)
+        if (type=="est"){
+            time<-c(0,as.vector(x$intmap))
+            S<-c(1,1-cumsum(x$pf))
+            S<-rep(S,each=2)[-2*length(S)]
+            time[time==Inf]<-max(time)
+        } else if (type=="lower"){
+            time<-x$time
+            S<-x$lower
+        } else if (type=="upper"){
+            time<-x$time
+            S<-x$upper
+        }
+        
+
         ## change y values depending on dtype
         if (dtype=="survival"){
-            lines(time,S,lty=LTY)
+            #lines(time,S,lty=LTY)
+            # call lines function with options in parlist
+            do.call("lines",c(list(x=time,y=S),parlist))
         } else if (dtype=="cdf"){
-            lines(time,1-S,lty=LTY)
+            #lines(time,1-S,lty=LTY)
+            # call lines function with options in parlist
+            do.call("lines",c(list(x=time,y=(1-S)),parlist))
         } else if (dtype=="link"){
             ## links will be inverse distributions, 
             ## so 0 and 1 give -Inf and +Inf, do not plot those
             I<-S>0 & S<1
             H<-1-S
-            lines(time[I],dlink(H[I]),lty=LTY)
+            #lines(time[I],dlink(H[I]),lty=LTY)
+            # call lines function with options in parlist
+            do.call("lines",c(list(x=time[I],y=dlink(H[I])),parlist))
         }
     }
 
@@ -157,12 +217,21 @@ function(x,XLAB="time",YLAB=NULL,COL=gray((8:1)*.1),LTY=1:9,LEGEND=NULL,
             for (i in 1:nstrata){polygon.icfit(x[i],COL[i])}
         }
        for (i in 1:nstrata){
-            lines.icfit(x[i],LTY[i])
+            if (conf.int){ 
+                lines.icfit(x[i]$CI,i,parlist=cipar,type="lower")
+                lines.icfit(x[i]$CI,i,parlist=cipar,type="upper")
+            }
+            lines.icfit(x[i],i)
         }
     } else {
         ## remember shading not supported for dtype='link'    
         if (shade){ polygon.icfit(x,COL[1]) }
-        lines.icfit(x,LTY[1])
+        #lines.icfit(x,LTY[1])
+        if (conf.int){ 
+            lines.icfit(x[1]$CI,1,parlist=cipar,type="lower")
+            lines.icfit(x[1]$CI,1,parlist=cipar,type="upper")
+        }
+        lines.icfit(x,1)
     }
 
     ## xylegfunc is a function to find good place (maybe) to put legend
@@ -210,19 +279,31 @@ function(x,i){
         # if you try to pick out the ith strata, but there are n<i strata, give error
         if (!any((1:nstrata)==i)){
             #warning(paste("number of strata=",nstrata,"but index=",i))
-            stop("must use an integer to select a stratum")
+            stop("must use an integer<=number of strata, to select a stratum")
         }
         pick.strata.part<-function(X,i,strata=x$strata){
-            if (is.vector(X) && length(X)==length(strata)) part<-X[i]
-            else if (is.vector(X) && length(X)==sum(strata)){
+            if (is.vector(X) && length(X)==length(strata)){
+                if (is.list(X) & length(X)==length(strata) & length(strata)>1){
+                    ## this section is for the confidence intervals
+                    ## Note: lists can be vectors
+                    if (class(X[[1]])=="list" & all.equal(names(X[[1]]),names(X[[2]])  )  ){
+                    part<-X[[i]]
+                    } else {
+                        ## if you have a list that has the same number of elements as strata,
+                        ## you do not want to pick out ith element unless each element has same set of names
+                        part<-X
+                    }
+                } else {
+                    part<-X[i]
+                }
+            } else if (is.vector(X) && length(X)==sum(strata)){
                 part<-X[(sum(strata[0:(i-1)])+1):sum(strata[0:i])]
             } else if (is.matrix(X)){
                 part<-X[,(sum(strata[0:(i-1)])+1):sum(strata[0:i])]
                 if (!is.null(attr(X,"LRin"))){
                     attr(part,"LRin")<-attr(X,"LRin")[,(sum(strata[0:(i-1)])+1):sum(strata[0:i])]
                 }
-            } else part<-X
-            
+            }  else part<-X          
             return(part)
         }
         out<-mapply(pick.strata.part,x,i)

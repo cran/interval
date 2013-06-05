@@ -1,4 +1,14 @@
-         CHANGES in `interval' VERSION 1.0-1.2
+         CHANGES in `interval' VERSION 1.1-0.0
+ 
+   o   fix error in getsurv when the NPMLE is indeterminate in the interval from 0 to x. In that case getsurv could not calculate the interpolation.
+   o   add conf.int option for icfit. This uses a modified boostrap confidence interval and can be very time consuming. 
+   o   change options for plot.icfit so that you can give par options (e.g., lwd, lty, col)  for estimates (estpar) and confidence intervals (cipar). 
+   o   change '].icfit' to allow for confidence interval. 
+   o   update help files, add new references.
+
+
+ 
+        CHANGES in `interval' VERSION 1.0-1.2
  
    o   fix error in icfit when stratified data with at least one degenerate strata (i.e., NPMLE result for the degenerate strata is only one interval with pf=1 in that interval)
    o   fix error in icfit when data are degenerate such that all left=0 and right=Inf, now gives correct NPMLE
