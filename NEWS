@@ -1,3 +1,14 @@
+         CHANGES in `interval' VERSION 1.1-0.1
+ 
+   o   fix vignette, put in proper directory
+   o   fix getsurv to work in when times before first failure
+   o   fix error in Aintmap for extreme case when intmap=(0,Inf) and k=1. 
+   o   added a modified bootstrap confidence interval for the NPMLE to the icfit function. 
+   o    change default for initfit in icfit, ictest, and wlr_trafo to NULL (avoids a rare problem with the initcomputeMLE function which could cause R to crash). Change help to explain this.
+
+
+
+
          CHANGES in `interval' VERSION 1.1-0.0
  
    o   fix error in getsurv when the NPMLE is indeterminate in the interval from 0 to x. In that case getsurv could not calculate the interpolation.

@@ -4,6 +4,8 @@ export(icfit,ictest,SurvLR,getsurv,Aintmap,
     wsrMC,wsrHLYpclt,initcomputeMLE,initEMICM,icfitBootCI)       
 
 import(survival,perm)
+import(MLEcens)
+import(Icens)
 
 S3method(print, ictest)
 S3method(plot,icfit)

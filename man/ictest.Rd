@@ -159,7 +159,7 @@ within subject resampling (method="wsr.mc").
 
 Fay and Shaw (2010) gives the mathematical expressions for the different tests.
 
-Note that the default method performs reasonably well even when the assessment times depend on the treatment (see Fay and Shih, 2012, Fay and Hunsberger, 2012).
+Note that the default method performs reasonably well even when the assessment times depend on the treatment (see Fay and Shih, 2012, Fay and Hunsberger, 2013).
 If your primary concern is with retaining type I error and you do not mind conservativeness, then the wsr.pclt or wsr.mc methods can be used.
 }
 \value{
@@ -220,7 +220,7 @@ of  result of \code{methodRule}. One of
 
 Fay, MP and Shih JH. (2012). Weighted Logrank Tests for Interval Censored Data when Assessment Times Depend on Treatment. Statistics in Medicine 31, 3760-3772.
 
-Fay, MP and Hunsberger, SA. (2012). Practical Issues on Using Weighted Logrank Tests with Interval Censored Events in Clinical Trials. Chapter 13 in Interval-Censored Time-to-Event Data: Methods and Applications, Chen, D-G, Sun, J, and Peace, KE (editors) Chapman and Hall/CRC. 
+Fay, MP and Hunsberger, SA. (2013). Practical Issues on Using Weighted Logrank Tests with Interval Censored Events in Clinical Trials. Chapter 13 in Interval-Censored Time-to-Event Data: Methods and Applications, Chen, D-G, Sun, J, and Peace, KE (editors) Chapman and Hall/CRC. 
 
 
    Finkelstein, DM (1986). "A proportional hazards 
