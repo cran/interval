@@ -1,4 +1,14 @@
-         CHANGES in `interval' VERSION 1.1-0.1
+        CHANGES in `interval' VERSION 1.1-0.7
+   o   add .onLoad function to give message that Icens is available on bioconductor (Thanks to Henrik P?rn for the suggestion).
+   o   fix link to perm  in ictest.Rd to work correctly in new versions of R (requested by CRAN)
+
+   o  fix title to be title case
+
+        CHANGES in `interval' VERSION 1.1-0.2
+ 
+   o   fix man page for icfit. The description of the $strata and $pf elements of the list was not correct.
+
+        CHANGES in `interval' VERSION 1.1-0.1
  
    o   fix vignette, put in proper directory
    o   fix getsurv to work in when times before first failure

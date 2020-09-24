@@ -91,6 +91,7 @@ URL:\url{http://www3.niaid.nih.gov/about/organization/dcr/BRB/staff/pam.htm}
 
 
 \begin{document}
+\SweaveOpts{concordance=FALSE}
 
 %% include your article here, just as usual
 %% Note that you should use the \pkg{}, \proglang{} and \code{} commands.

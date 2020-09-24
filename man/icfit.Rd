@@ -99,12 +99,11 @@ pulls out individual fits when the right side of the formula of the \code{icfit}
 
 A list with elements:
   \item{A}{ this is the n by k matrix of indicator functions, NULL if more than one strata, not printed by default}
-  \item{strata}{a named numeric vector of numbers of observations in each strata, if one strata observation named NPMLE} 
+  \item{strata}{a named numeric vector of length of pf vector (jumps in NPMLEs) for each strata, if one strata observation named NPMLE} 
   \item{error}{this is max(d + u - n), see Gentleman and Geyer, 1994}
   \item{numit}{number of iterations}
-  \item{pf}{vector of estimated probabilities of the distribution}
-  \item{intmap}{2 by k matrix, where the ith column defines an interval 
-        corresponding to the probability, pf[i]}
+  \item{pf}{vector of estimated probabilities of the distribution. if more than one strata, vectors are concatenated}
+  \item{intmap}{2 by k matrix, where the ith column defines an interval corresponding to the probability, pf[i]}
   \item{converge}{a logical, TRUE if normal convergence}
   \item{message}{character text message on about convergence}
   \item{anypzero}{logical denoting whether any of the Turnbull intervals were set to zero}
@@ -120,7 +119,7 @@ but that estimate can be off by 100 percent or more because the time to calculat
     Statistics. 1: 129-140.
 
     Fay, MP and Shaw, PA (2010). Exact and Asymptotic Weighted Logrank Tests for Interval Censored Data: The interval R package.
-    Journal of Statistical Software. \url{http://www.jstatsoft.org/v36/i02/}. 36 (2):1-34.
+    Journal of Statistical Software. \url{https://www.jstatsoft.org/v36/i02/}. 36 (2):1-34.
 
     Gentleman, R. and Geyer, C.J. (1994). Maximum likelihood 
     for interval censored data:consistency and computation. 

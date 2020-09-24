@@ -7,6 +7,12 @@ import(survival,perm)
 import(MLEcens)
 import(Icens)
 
+importFrom("grDevices", "gray")
+importFrom("graphics", "axis", "polygon")
+importFrom("stats", "binom.test", "dnorm", "model.extract",
+         "model.matrix", "pchisq", "pnorm", "qnorm", "terms")
+  
+
 S3method(print, ictest)
 S3method(plot,icfit)
 S3method(summary, icfit)
@@ -19,6 +25,5 @@ S3method(ictest, default)
 S3method(wlr_trafo, default)
 S3method(wlr_trafo, Surv)
 S3method(wlr_trafo, data.frame)
-
 
 

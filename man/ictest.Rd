@@ -84,7 +84,7 @@ Ignored if \code{icFIT} is not null}
 \item{exact}{a logical value, TRUE denotes exact test, ignored if method is not NULL}
 \item{method}{a character value, one of 'pclt','exact.network','exact.ce','exact.mc', 'scoretest', 'wsr.HLY', 'wsr.pclt', 'wsr.mc'. 
 If NULL method is chosen by methodRule which may use the value of exact.}
-\item{methodRule}{a function used to choose the method, default \code{\link{methodRuleIC1}}. (see details in \code{\link[perm]{perm}})}
+\item{methodRule}{a function used to choose the method, default \code{\link{methodRuleIC1}}. (see details in \code{\link[perm:permTS]{perm}})}
  \item{mcontrol}{list of arguments for controling algorithms of different methods (see \code{\link{mControl}})}
   \item{Lin}{logical vector, should L be included in the interval? (see details)}
   \item{Rin}{logical vector, should R be included in the interval? (see details)} 
@@ -128,7 +128,7 @@ Because of theoretical difficulties (discussed below), the default method (metho
    perform a permutation test on the scores. There are several ways to perform the permutation 
 test, and the function \code{\link{methodRuleIC1}} chooses which of these ways will be used. The choice
 is basically between using a permutational central limit theorem (method="pclt") or using an exact method. 
-There are several algorithms for the exact method (see \code{\link[perm]{perm}} ). Note that there are two 
+There are several algorithms for the exact method (see \code{\link[perm:permTS]{perm}} ). Note that there are two 
 exact two-sided methods and the default is to essentially double the smaller of the one-sided p-values (tsmethod='central'), while the 
 default in the \code{coin} package is different (see \code{\link{mControl}} and the tsmethod option).  
    
@@ -216,7 +216,7 @@ of  result of \code{methodRule}. One of
    18: 273-285 (Correction: 1999, 18: 2681).
 
     Fay, MP and Shaw, PA (2010). Exact and Asymptotic Weighted Logrank Tests for Interval Censored Data: The interval R package.
-    Journal of Statistical Software. \url{http://www.jstatsoft.org/v36/i02/}. 36 (2):1-34.
+    Journal of Statistical Software. \url{https://www.jstatsoft.org/v36/i02/}. 36 (2):1-34.
 
 Fay, MP and Shih JH. (2012). Weighted Logrank Tests for Interval Censored Data when Assessment Times Depend on Treatment. Statistics in Medicine 31, 3760-3772.
 
