@@ -216,7 +216,7 @@ of  result of \code{methodRule}. One of
    18: 273-285 (Correction: 1999, 18: 2681).
 
     Fay, MP and Shaw, PA (2010). Exact and Asymptotic Weighted Logrank Tests for Interval Censored Data: The interval R package.
-    Journal of Statistical Software. \url{https://www.jstatsoft.org/v36/i02/}. 36 (2):1-34.
+    Journal of Statistical Software. \doi{10.18637/jss.v036.i02}. 36 (2):1-34.
 
 Fay, MP and Shih JH. (2012). Weighted Logrank Tests for Interval Censored Data when Assessment Times Depend on Treatment. Statistics in Medicine 31, 3760-3772.
 

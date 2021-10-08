@@ -1,3 +1,7 @@
+        CHANGES in `interval' VERSION 1.1-0.8
+   o   switch to DOI for links to Journal of Statistical Software (suggested by JSS).
+
+
         CHANGES in `interval' VERSION 1.1-0.7
    o   add .onLoad function to give message that Icens is available on bioconductor (Thanks to Henrik P?rn for the suggestion).
    o   fix link to perm  in ictest.Rd to work correctly in new versions of R (requested by CRAN)

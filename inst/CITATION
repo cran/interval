@@ -9,12 +9,12 @@ citEntry(entry = "Article",
   volume       = "36",
   number       = "2",
   pages        = "1--34",
-  url          = "https://www.jstatsoft.org/v36/i02/",
+  doi          = "10.18637/jss.v036.i02",
 
   textVersion  =
   paste("Michael P. Fay, Pamela A. Shaw (2010).",
         "Exact and Asymptotic Weighted Logrank Tests for Interval Censored Data: The interval R Package.",
         "Journal of Statistical Software, 36(2), 1-34.",
-        "URL https://www.jstatsoft.org/v36/i02/.")
+        "doi:10.18637/jss.v036.i02")
 )
 

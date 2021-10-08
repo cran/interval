@@ -119,7 +119,7 @@ but that estimate can be off by 100 percent or more because the time to calculat
     Statistics. 1: 129-140.
 
     Fay, MP and Shaw, PA (2010). Exact and Asymptotic Weighted Logrank Tests for Interval Censored Data: The interval R package.
-    Journal of Statistical Software. \url{https://www.jstatsoft.org/v36/i02/}. 36 (2):1-34.
+    Journal of Statistical Software. \doi{10.18637/jss.v036.i02}. 36 (2):1-34.
 
     Gentleman, R. and Geyer, C.J. (1994). Maximum likelihood 
     for interval censored data:consistency and computation. 
