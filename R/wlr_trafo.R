@@ -5,7 +5,10 @@
 `wlr_trafo.data.frame`<-function(x,...){
     ## the main purpose of this function is for ease of use of wlr_trafo in the coin package
     ## if x[[1]] is numeric this treats the time to event for the ith observation as happening at exactly x[[1]][i] 
-    if (dim(x)[2]>1 | (class(x[[1]])!="Surv" & class(x[[1]])!="numeric")) stop("data.frame method must have one variable with class either 'Surv' or 'numeric' ")
+    # 2023-08-23 FIXED
+    # OLD STYLE: if (dim(x)[2]>1 | (class(x[[1]])!="Surv" & class(x[[1]])!="numeric")) stop("data.frame method must have one variable with class either 'Surv' or 'numeric' ")
+    if (dim(x)[2]>1 | (!inherits(x[[1]],what="Surv") & 
+                       !inherits(x[[1]],what="numeric"))) stop("data.frame method must have one variable with class either 'Surv' or 'numeric' ")
     wlr_trafo(x[[1]],...)
 }
 

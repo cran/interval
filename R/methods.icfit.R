@@ -286,7 +286,7 @@ function(x,i){
                 if (is.list(X) & length(X)==length(strata) & length(strata)>1){
                     ## this section is for the confidence intervals
                     ## Note: lists can be vectors
-                    if (class(X[[1]])=="list" & all.equal(names(X[[1]]),names(X[[2]])  )  ){
+                    if (inherits(X[[1]],what="list") & all.equal(names(X[[1]]),names(X[[2]])  )  ){
                     part<-X[[i]]
                     } else {
                         ## if you have a list that has the same number of elements as strata,

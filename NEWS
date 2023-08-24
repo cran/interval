@@ -1,3 +1,12 @@
+       CHANGES in `interval' VERSION 1.1-1.0
+   o   fix compacting pdf
+
+       CHANGES in `interval' VERSION 1.1-0.9
+   o   fix CITATION file
+   o   fix interval-package.Rd by adding alias
+   o   change code like if(class(x)=="text") to if(inherits(x,what="text")) 
+
+
         CHANGES in `interval' VERSION 1.1-0.8
    o   switch to DOI for links to Journal of Statistical Software (suggested by JSS).
 

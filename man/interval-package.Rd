@@ -1,5 +1,6 @@
 \name{interval-package}
 \alias{interval}
+\alias{interval-package}
 \docType{package}
 \title{
 Tests and NPMLE for interval censored data

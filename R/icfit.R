@@ -53,7 +53,8 @@ function (formula, data,...)
         nstrata<-length(group)
         sbind<-function(x,y){
             if (is.vector(x) & is.vector(y)){
-                 if (class(x)=="list" & class(y)=="list"){ 
+                 if (inherits(x,what="list") & 
+                     inherits(y,what="list")){ 
                      out<-list(x,y)
                  } else out<-c(x,y)
             } else if (is.matrix(x) & is.matrix(y)) out<-cbind(x,y) 
@@ -305,7 +306,7 @@ function(L, R, initfit = NULL, control=icfitControl(), Lin=NULL, Rin=NULL,...)
             } else {
                 initfit<-try( do.call(initfit,args=c(list(L=L,R=R,Lin=Lin,Rin=Rin,A=A),initfitOpts)) )
             }
-            if (class(initfit)=="try-error"){
+            if (inherits(initfit, what="try-error")){
                 warning("initfit was a character, treated as a function name, and when called gave an error so will not be used")
                 pbar <- apply(A/apply(A, 1, sum), 2, mean)
             } else {
